@@ -7,11 +7,11 @@
 2. **arXiv.org** *'Towards Robust and Accurate Stability Estimation of Local Surrogate Models in Text-based Explainable AI'* : https://arxiv.org/html/2501.02042 
 - This paper notes that local surrogate models have been shown to lack stability across image, tabular and text data. We could use it to argue that research attention has gone to fidelity and stability rather than runtime.
   
-3. Ross, Hughes & Doshi-Velez — Right for the Right Reasons: Training Differentiable Models by Constraining their Explanations
+3. Ross, Hughes & Doshi-Velez — Right for the Right Reasons: Training Differentiable Models by Constraining their Explanations https://arxiv.org/pdf/2012.00093
 - Directly identifies computational scalability as a limitation of LIME. The authors explain that LIME's per-example perturbation and fitting process can become computationally prohibitive when explanations are required across an entire dataset.    
 - Provides useful runtime evidence: LIME took 0.03s for 34 features, 1.03s for 75, 1.54s for 784 and 2.59s for 5,000, while their gradient method remained much faster. However, this was a comparison with input gradients rather than a dedicated investigation of LIME's scaling behaviour. 
 - Also notes that increasing LIME's number of samples could improve coverage for high-dimensional data, but doing so increases computational cost because more model evaluations are required. 
-4. Dieber & Kirrane — Why model why? Assessing the strengths and limitations of LIME
+4. Dieber & Kirrane — Why model why? Assessing the strengths and limitations of LIME https://arxiv.org/pdf/1703.03717
 - Particularly relevant because it specifically evaluates LIME on tabular data. The researchers use LIME to explain four ML models trained on an Australian weather dataset. 
 - Shows a different type of scaling problem: LIME works well for individual/local explanations, but doesn't provide an easy way of scaling these into a global understanding of the model. The researchers had to manually aggregate multiple LIME outputs in Excel. 
 - They describe global analysis as hours of repetitive manual work, while noting that individual LIME explanations themselves were quick to compute. 
