@@ -1,0 +1,46 @@
+###Link:### https://arxiv.org/abs/1703.03717 
+
+###Hugh's Keys Takeaways###
+    - Trained Models can make "correct" possitions for the wrong reasons. 
+    - LIME Explianations being generated can be computationally expensive because of its repead sample inputs being used. 
+    - The authors show that explanations can actually be incorporated into training to discourage models from using misleading features. 
+    - Features scalling mentioned in the paper for LIME VS Gradient: 
+        - LIME takes 0.03s at 34 dimensions, 1.03s at 75, 1.54s at 784 and 2.59s at 5,000, while their gradient approach remains much faster.  
+
+###Abstract### 
+    Neural networks are among the most accurate supervised learning methods in use today, but their opacity makes them difficult to trust in critical applications, 
+    especially when conditions in training differ from those in test. Recent work on explanations for black-box models has produced tools (e.g. LIME) to show the implicit 
+    rules behind predictions, which can help us identify when models are right for the wrong reasons. However, these methods do not scale to explaining entire datasets 
+    and cannot correct the problems they reveal. We introduce a method for efficiently explaining and regularizing differentiable models by examining and selectively penalizing 
+    their input gradients, which provide a normal to the decision boundary. We apply these penalties both based on expert annotation and in an unsupervised fashion that encourages 
+    diverse models with qualitatively different decision boundaries for the same classification problem. On multiple datasets, we show our approach generates faithful explanations 
+    and models that generalize much better when conditions differ between training and test. 
+
+###AI Summary### 
+    The paper “Right for the Right Reasons” by Ross, Hughes and Doshi-Velez (2017) looks at a problem with machine-learning models: a model can give the correct prediction but 
+    for the wrong reason. For example, a model might accidentally learn to rely on an irrelevant feature that happens to correlate with the answer in the training data. 
+    The authors propose using input gradients to show which features are influencing a model's prediction. They then go a step further and use these explanations during training, 
+    penalising the model when it relies on features that experts consider inappropriate. Their experiments show that this can produce models that make decisions based on more
+    meaningful features and can generalise better when the test data differs from the training data.
+
+    For your research, the interesting part is the paper's comparison with LIME. The authors describe LIME as a sample-based explanation method that repeatedly perturbs inputs 
+    and observes the model's predictions. They argue that this approach can become computationally expensive when explanations are required for many observations, whereas 
+    their gradient-based method can identify influential features much faster for differentiable models. So, although the paper is not specifically a study of how LIME runtime 
+    scales with the number of tabular features, it provides useful evidence that LIME's sampling process creates a scalability/cost issue and helps justify investigating that 
+    problem in more detail.
+
+    In very simple terms: LIME can tell you why a model made a decision, but doing that repeatedly can be expensive. 
+    Ross et al. propose a faster approach that can also encourage the model to learn for the “right reasons.”  
+
+###Paper Value### 
+    This paper is relevant to our research because it provides evidence that LIME can suffer from computational scalability problems. The authors compare the time required to produce 
+    explanations using LIME against their gradient-based method across datasets with different input dimensions. As dimensionality increases, the reported time required by LIME also 
+    increases substantially, highlighting a potential weakness of its sample-based approach. 
+
+    However, the paper is not specifically investigating how LIME cost scales with increasing features in tabular data. Its main aim is to introduce a gradient-based method for 
+    generating explanations and training models to make decisions for the "right reasons." Therefore, the paper is useful as evidence that a scalability problem exists, but a more 
+    focused paper would still be needed to understand LIME's cost scaling specifically on tabular datasets.
+
+###Proof Paper is Valid###
+    This is a strong academic source because it was published in the proceedings of IJCAI 2017, a major international artificial intelligence conference, and has a DOI and official 
+    proceedings record. The authors also evaluate their method experimentally across multiple datasets rather than only making theoretical claims
