@@ -19,18 +19,58 @@ overview of advancements in LIME, guiding future research and helping practition
 continuously updated interactive website, Which LIME Should I Trust?,
 offering a concise and accessible overview of the survey.
 
-**AI Summary:** . "Which LIME should I trust? Concepts, Challenges, and Solutions" (arXiv 2503.24365)
+**Model:** Claude Sonnet 5.5
 
-*Summary:* This is a survey of LIME and its variants, built from a review of over 20,000 papers. It organises LIME extensions along two axes: the technical modification made within the LIME pipeline, and the specific issue each one addresses. The pipeline has four steps: feature generation, sample generation, feature attribution (the surrogate fit), and explanation representation. The issues are locality, fidelity, interpretability, stability, and efficiency. It maps each variant to the step it changes and to the modality it targets. It also criticises the field's practices. About half of the methods lack code, and many papers compare only against vanilla LIME. 
+**Prompt:** ```markdown
+**Title:** Which LIME should I trust? Concepts,
+Challenges, and Solutions
 
-*Relevance to your topic:* high, and it is the best starting point.
+**Link:** https://arxiv.org/pdf/2503.24365 Please provide an AI summary of this paper, rate out of 10 this papers relevance to my topic and state how it relates. My topic is LIME cost/quality scaling on High-Dimensional Tabular Data on different models. 
 
-- A ready-made map of the tabular literature. Its Table 2 lists dozens of tabular-specific variants (e.g. ILIME, Kernel-LIME, K-LIME, LIME-SUP, GMM-LIME, BMB-LIME, US-LIME, LIMEtree, UnRAvEL-LIME, LSLIME, QLIME, bLIMEy). These are candidates for the "quality" side of your comparison.
-- The cost/quality tension is stated explicitly. The survey notes that the issues are interdependent: increasing locality can hurt efficiency, while lowering efficiency can help stability. That is essentially your research question. 
-arxiv
-- Where the cost comes from. It attributes cost to perturbation generation, black-box predictions, and surrogate fitting. In the notation, the perturbation mask is a binary vector in {0,1}^d, where d is the feature count, which is the quantity that grows in your setting.
-- Scalability is a named evaluation property (Table 3, alongside Efficiency and Consistency), but the survey does not benchmark it. It also says a standard LIME evaluation framework is missing, so you would be building your own protocol.
 
-*Gap:* The survey does not analyse how any variant behaves as dimensionality grows. That question is still open, which makes it a reasonable motivation for your work.
+```
+
+**AI Summary:** Summary
+
+This is a survey of LIME and its many variants, not an empirical paper. It does not propose a method or run experiments. The authors reviewed over 20,000 LIME-related papers and built a taxonomy along two axes:
+
+The issue addressed: locality, fidelity, interpretability, stability, or efficiency.
+Where in the LIME pipeline the variant intervenes: feature generation, sample generation, feature attribution (the surrogate model and kernel), or explanation representation.
+
+Table 1 maps about 45 variants onto these axes, and Table 2 groups them by modality (tabular, image, text, time series, and so on). The discussion section makes three main points:
+
+Reproducibility is poor. About 50% of the surveyed methods have no code.
+Evaluation is inconsistent. Most papers compare only against vanilla LIME and use cherry-picked metrics.
+The field needs a standard LIME evaluation framework and help selecting variants.
+Relevance: 6/10
+
+It is useful as a map of the field, but it won't give you direct evidence for your question.
+
+How it relates to your topic
+
+It names the trade-offs you're studying. Section 4.1 notes that the issues interact: increasing locality can hurt efficiency, while reducing efficiency (more computation) can improve stability. That is the cost/quality tension at the core of your topic, though the paper only states it qualitatively.
+Its metrics table gives you vocabulary. Table 3 lists Efficiency and Scalability ("how well the method performs as the model or dataset size increases") alongside Correctness, Consistency and Continuity. It is a ready-made menu for operationalising "cost" and "quality".
+It catalogues tabular-specific variants. Table 2 lists about 19 universal tabular methods, including US-LIME, GMM-LIME, BMB-LIME, UnRAvEL-LIME, LSLIME, QLIME, GuidedLIME and LIMEtree. Several target fidelity or stability on tabular data, which is the "quality" side of your question.
+It covers different model types. The paper notes LIME has been applied to NNs, CNNs, LSTMs, transformers, decision trees and random forests. It also cites Klein et al. (2024) on pairing evaluation metrics with model architectures, which fits your "different models" angle.
+It highlights directly relevant cost/quality methods. S-LIME estimates how many samples are needed for stable explanations, which is the clearest cost/quality scaling idea in the survey. OptiLIME tunes kernel width to balance stability against fidelity.
+
+Why it isn't higher
+
+There are no scaling results. It contains no experiments, no runtime or sample-count curves, and no analysis of how cost or quality changes with dimensionality d. The dimensionality d appears only in the notation.
+The efficiency literature it covers is thin and off-target. The only efficiency-focused methods are Attention-LIME (text), survLIME and survLIME-inf (survival models). None address high-dimensional tabular data.
+It treats model dependence lightly. LIME is described as model-agnostic, but the paper does not compare how explanation cost or quality varies across model families.
+It excludes SHAP and other methods. It looks only at LIME variants, so there is no cross-method cost comparison.
+Suggested follow-ups
+
+Chase these from the reference list:
+
+S-LIME (Zhou et al., KDD 2021), for sample-size and stability.
+OptiLIME (Visani et al.), for the stability/fidelity trade-off.
+US-LIME, UnRAvEL-LIME and GLIME (Tan et al., NeurIPS 2023), for sampling and stability improvements.
+Garreau & von Luxburg, "Looking deeper into tabular LIME", for theory on how tabular LIME behaves.
+Klein et al. (2024) and OpenXAI (Agarwal et al.), for benchmarking explanation methods across models.
+Sahakyan et al. (2021), a survey of explainable AI for tabular data.
 
 **Paper's Value:** This paper poses more relevance as it discusses the computational inefficieny's  of LIME and limitations in the handling of certain types of data as one of five issue categories. The paper mentions that evaluation practice is inconsistent and about half the methods lack code, a possible reason why scaling comparisons are hard to find.
+
+**Source Validation:**
