@@ -1,0 +1,13 @@
+**Title:** Conditional Local Importance by Quantile Expectations
+
+**Link:** https://arxiv.org/html/2411.08821
+
+**Key Takeaways:** This paper proposes a new model-agnostic XAI method called CLIQUE, in place of SHAP and LIME that could highlight locally dependent relationships and improve stability. The paper establishes that hyperparameter tuning is required to detect localised interaction effects with LIME which can be difficult.
+
+**Abstract:** Global variable importance measures are commonly used to interpret the results of machine learning models. Local variable importance techniques assess how variables contribute to individual observations. Current, popular methods, including LIME and SHAP, provide useful measures of feature contribution in the prediction space, while leaving opportunities for improved characterization of local structure in the model loss space. Additionally, they are not natively adapted for multi-class classification problems. We propose a new model-agnostic method for calculating local variable importance, CLIQUE, that highlights locally dependent relationships, provides improved stability over permutation-based methods, and can be directly applied to multi-class classification problems. Simulated and real-world examples show that CLIQUE emphasizes locally dependent information, captures interaction behavior beyond what can be evaluated by correlations, and assigns zero importance in regions where the response is invariant to changes in variables.
+
+**AI Summary:** Findings: CLIQUE is a new model-agnostic local importance method. It targets locally dependent relationships and interaction effects, is more stable than permutation-based methods, and works natively for multi-class problems. The authors position it against LIME and SHAP, which they say characterise local structure in the loss space less well.
+
+Relevance: moderate, mostly as background. It frames LIME's limitations in terms of what its attributions capture (interactions, local structure), which bears on the quality side of your topic. It doesn't address cost, dimensionality or scaling, and the abstract doesn't mention the hyperparameter-tuning point in your takeaway. If that comes from the body, cite the specific section. Worth checking whether its experiments use high-dimensional tabular data and report runtime, since that would make it a useful comparator.
+
+**Paper's Value:** Valuable in understanding LIME and SHAP from the perspective if feature contribution, however, irrelevant to the cost-effectiveness of LIME when dealing with high dimensional tabular data.
