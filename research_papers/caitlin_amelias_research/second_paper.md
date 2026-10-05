@@ -51,4 +51,4 @@ The high-dimensional case is a single synthetic ANN experiment with 101 features
 
 **Source Validation:** *Source of discovery:* arxiv.org
 
-This paper was recently published (2026) in the journal "Transactions on Machine Learning Research (TMLR)"
+This paper was recently published (2026) in the journal "Transactions on Machine Learning Research (TMLR)".

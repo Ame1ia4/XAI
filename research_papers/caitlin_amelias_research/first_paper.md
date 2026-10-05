@@ -36,4 +36,7 @@ Where it does connect to your topic:
 
 **Paper Value:** This paper is not of much value given our topic as it compares similarity measures for ranked explanations and proposes synonymity weighting which doesn't deal with cost-scaling for tabular data.
 
-**Source Validation:** This paper is a pre-print. Christopher Burger, Lingwei Chen, and Thai Le have written papers together for the 2023, Conference on Empirical Methods in Natural Language Processing (EMNLP 2023), this paper was subsequently cited 28 times. Christopher Burger has 13 other publications which are pre-prints or conference papers available on arxiv.org.
+**Source Validation:**
+*Source of discovery:* arxiv.org  
+
+This paper is a pre-print with no citations, however the authors have previous publications. Christopher Burger, Lingwei Chen, and Thai Le have written papers together for the 2023, Conference on Empirical Methods in Natural Language Processing (EMNLP 2023), this paper was subsequently cited 28 times. Christopher Burger has 13 other publications which are pre-prints or conference papers available on arxiv.org.
