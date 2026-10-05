@@ -1,0 +1,25 @@
+Covertype 
+    Link: https://archive.ics.uci.edu/dataset/31/covertype 
+    Info: - ~580,000 rows with 54 features, classification of pixels into 7 forest cover types based on attributes such as elevation, aspect, slope, hillshade, soil-type, and more.
+    AI Ops: Recommend Starting Set 
+
+Poker Hand 
+    Link: https://archive.ics.uci.edu/dataset/158/poker+hand
+    Info:  ~1,000,000 rows with 10 input features describing suit and ranking of cards
+    AI Ops: Excellent for isolationg row scaling 
+
+SUSY 
+    Link: https://archive.ics.uci.edu/dataset/279/susy
+    Info: 5 million rows, 18 numerical features, Binary Classification and no missing values, made of distinguishing simulated supersymmetric-particle signals from background events
+    AI Ops: Good for large scaling of rows
+
+HIGGS 
+    Link: https://archive.ics.uci.edu/dataset/280/higgs
+    Info:  11 million rows and 28 features, based around the HIGGS Boson and background processing
+    AI Ops: Specifically designed as a machine-learning classification dataset (compressed CSV is around 2.6GB thought not a recommend starting point by any means)
+
+Census Income KDD
+    Link: https://archive.ics.uci.edu/dataset/117/census+income+kdd
+    Info: ~300,000 rows with 40 variables, of weighted census data extracted from the 1994 and 1995 current population surveys conducted by the U.S. Census Bureau
+    AI Ops: Realistic message dataset
+    
