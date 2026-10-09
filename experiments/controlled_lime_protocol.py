@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import os
+import pickle
 from itertools import combinations
+from pathlib import Path
 from time import perf_counter
 from typing import Any, Callable
 
@@ -92,6 +95,49 @@ def feature_subset(feature_count: int, feature_names: list[str]) -> list[int]:
     return sorted(numeric_indices + shuffled_categorical[: feature_count - len(numeric_indices)])
 
 
+def _protocol_settings() -> dict[str, Any]:
+    """Settings a checkpoint must share with the current run to be resumable."""
+    return {
+        "RANDOM_STATE": RANDOM_STATE,
+        "SAMPLE_SIZE": SAMPLE_SIZE,
+        "TEST_SIZE": TEST_SIZE,
+        "BACKGROUND_SIZE": BACKGROUND_SIZE,
+        "SAMPLE_BUDGETS": tuple(SAMPLE_BUDGETS),
+        "REPEATS": REPEATS,
+        "EXPLANATIONS_PER_CLASS": EXPLANATIONS_PER_CLASS,
+        "NUM_FEATURES": NUM_FEATURES,
+        "TOP_K": TOP_K,
+        "FEATURE_COUNTS": tuple(FEATURE_COUNTS),
+    }
+
+
+def _load_checkpoint(path: Path, model_name: str) -> dict[str, Any]:
+    if not path.is_file():
+        return {
+            "model": model_name,
+            "settings": _protocol_settings(),
+            "completed_units": [],
+            "observations": [],
+            "stability_rows": [],
+        }
+    with path.open("rb") as handle:
+        state = pickle.load(handle)
+    if state.get("model") != model_name or state.get("settings") != _protocol_settings():
+        raise ValueError(
+            f"Checkpoint {path} was written for a different model or protocol "
+            "configuration. Delete it (or pass a different checkpoint_path) to start over."
+        )
+    return state
+
+
+def _save_checkpoint(path: Path, state: dict[str, Any]) -> None:
+    # Write to a temporary file first so a crash mid-write cannot corrupt the checkpoint.
+    temporary = path.with_name(path.name + ".tmp")
+    with temporary.open("wb") as handle:
+        pickle.dump(state, handle)
+    os.replace(temporary, path)
+
+
 def benchmark_lime(
     model: Any,
     X_train: pd.DataFrame,
@@ -99,8 +145,17 @@ def benchmark_lime(
     y_test: pd.Series,
     predict_proba: Callable[[np.ndarray], np.ndarray],
     model_name: str,
+    checkpoint_path: str | Path | None = None,
+    progress: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Benchmark LIME cost, fit score, and repeated-run stability on shared cases."""
+    """Benchmark LIME cost, fit score, and repeated-run stability on shared cases.
+
+    ``checkpoint_path`` and ``progress`` are optional and do not change the results.
+    With a checkpoint path, finished (case, feature_count) units are saved as they
+    complete and skipped on the next call, so a long run (e.g. TabFM on a GPU) can be
+    interrupted and resumed. Every LIME explainer is seeded independently, so a
+    resumed run produces the same explanations as an uninterrupted one.
+    """
     background = X_train.sample(
         n=min(BACKGROUND_SIZE, len(X_train)),
         random_state=RANDOM_STATE,
@@ -112,17 +167,36 @@ def benchmark_lime(
         for position, class_label in enumerate(model.classes_)
     }
 
+    checkpoint = Path(checkpoint_path) if checkpoint_path is not None else None
+    state = (
+        _load_checkpoint(checkpoint, model_name)
+        if checkpoint is not None
+        else {"completed_units": [], "observations": [], "stability_rows": []}
+    )
+    completed_units = {tuple(unit) for unit in state["completed_units"]}
+    observations: list[dict[str, Any]] = state["observations"]
+    stability_rows: list[dict[str, Any]] = state["stability_rows"]
+
+    total_units = len(cases) * len(FEATURE_COUNTS)
+    if progress and completed_units:
+        print(f"Resuming {model_name}: {len(completed_units)}/{total_units} units already done.", flush=True)
+
     # Exclude first-call overhead from the per-explanation timing.
     predict_proba(background.iloc[:1].to_numpy())
 
-    observations: list[dict[str, Any]] = []
-    stability_rows: list[dict[str, Any]] = []
+    run_started = perf_counter()
+    units_run_now = 0
     for case_index, row in cases.iterrows():
+        if all((case_index, count) in completed_units for count in FEATURE_COUNTS):
+            continue
         case_data = row.to_numpy()
         true_label = int(y_test.loc[case_index])
         predicted_label = int(model.predict(X_test.loc[[case_index]])[0])
         label_position = class_positions[predicted_label]
         for feature_count in FEATURE_COUNTS:
+            if (case_index, feature_count) in completed_units:
+                continue
+            unit_started = perf_counter()
             subset_indices = feature_subset(feature_count, feature_names)
             subset_names = [feature_names[index] for index in subset_indices]
             background_subset = background.iloc[:, subset_indices].to_numpy()
@@ -140,6 +214,7 @@ def benchmark_lime(
                 reconstructed[:, subset_indices] = rows
                 return predict_proba(reconstructed)
 
+            unit_observations: list[dict[str, Any]] = []
             vectors_by_budget: dict[int, list[np.ndarray]] = {}
             for budget in SAMPLE_BUDGETS:
                 vectors: list[np.ndarray] = []
@@ -167,7 +242,7 @@ def benchmark_lime(
                     for feature_index, weight in explanation.as_map()[label_position]:
                         weights[feature_index] = weight
                     vectors.append(weights)
-                    observations.append(
+                    unit_observations.append(
                         {
                             "model": model_name,
                             "case_index": case_index,
@@ -183,6 +258,7 @@ def benchmark_lime(
                     )
                 vectors_by_budget[budget] = vectors
 
+            unit_stability: list[dict[str, Any]] = []
             for budget, vectors in vectors_by_budget.items():
                 for first, second in combinations(vectors, 2):
                     selected = np.flatnonzero((first != 0) | (second != 0))
@@ -204,7 +280,7 @@ def benchmark_lime(
                         ]
                     )
                     union = first_top | second_top
-                    stability_rows.append(
+                    unit_stability.append(
                         {
                             "model": model_name,
                             "case_index": case_index,
@@ -218,6 +294,26 @@ def benchmark_lime(
                             ),
                         }
                     )
+
+            # Commit the whole unit at once so a checkpoint never holds half a unit.
+            observations.extend(unit_observations)
+            stability_rows.extend(unit_stability)
+            completed_units.add((case_index, feature_count))
+            state["completed_units"] = sorted(completed_units, key=str)
+            if checkpoint is not None:
+                _save_checkpoint(checkpoint, state)
+
+            units_run_now += 1
+            if progress:
+                done = len(completed_units)
+                elapsed = perf_counter() - run_started
+                remaining = (total_units - done) * elapsed / units_run_now
+                print(
+                    f"[{model_name}] {done}/{total_units} units | case {case_index}, "
+                    f"{feature_count} features: {perf_counter() - unit_started:.1f}s | "
+                    f"est. remaining {remaining / 60:.1f} min",
+                    flush=True,
+                )
 
     raw = pd.DataFrame(observations)
     stability = pd.DataFrame(stability_rows)
