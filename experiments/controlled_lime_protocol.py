@@ -99,6 +99,7 @@ def benchmark_lime(
     y_test: pd.Series,
     predict_proba: Callable[[np.ndarray], np.ndarray],
     model_name: str,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Benchmark LIME cost, fit score, and repeated-run stability on shared cases."""
     background = X_train.sample(
@@ -181,6 +182,12 @@ def benchmark_lime(
                             "local_fidelity_score": float(explanation.score),
                         }
                     )
+                    # Checkpointing occurs after the timed explanation call.
+                    if progress_callback is not None:
+                        progress_callback({
+                            "observation": observations[-1],
+                            "weights": weights.tolist(),
+                        })
                 vectors_by_budget[budget] = vectors
 
             for budget, vectors in vectors_by_budget.items():

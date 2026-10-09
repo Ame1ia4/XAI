@@ -1,0 +1,2 @@
+model,accuracy,balanced_accuracy,macro_precision,macro_recall,macro_f1
+XGBoost,0.7975,0.6526372340690954,0.718502393076663,0.6526372340690954,0.6729721395375188

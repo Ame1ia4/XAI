@@ -1,0 +1,2 @@
+model,accuracy,balanced_accuracy,macro_precision,macro_recall,macro_f1
+RandomForest,0.807,0.6587866224144963,0.7910165471154613,0.6587866224144963,0.6932061316218803

@@ -1,0 +1,2 @@
+model,accuracy,balanced_accuracy,macro_precision,macro_recall,macro_f1
+LogisticRegression,0.7205,0.4836689423155827,0.6088597780202969,0.4836689423155827,0.5046337797425572
