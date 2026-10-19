@@ -1,0 +1,145 @@
+{
+  "model": "LogisticRegression",
+  "timestamp_utc": "2026-10-18T22:57:59.854950+00:00",
+  "python": "3.13.7 (v3.13.7:bcee1c32211, Aug 14 2025, 19:10:51) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "processor": "arm",
+  "cpu_count": 8,
+  "packages": {
+    "lime": "0.2.0.1",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "scipy": "1.15.3",
+    "scikit-learn": "1.7.2",
+    "xgboost": "3.2.0",
+    "matplotlib": "3.10.9"
+  },
+  "thread_env": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  },
+  "config": {
+    "dataset": "covertype",
+    "random_state": 42,
+    "sample_size": 10000,
+    "test_size": 0.2,
+    "background_size": 2000,
+    "n_numeric": 10,
+    "class_names": [
+      "Spruce/Fir",
+      "Lodgepole Pine",
+      "Ponderosa Pine",
+      "Cottonwood/Willow",
+      "Aspen",
+      "Douglas-fir",
+      "Krummholz"
+    ],
+    "feature_counts": [
+      18,
+      36,
+      54
+    ],
+    "sweep": {
+      "name": "full",
+      "explanations_per_class": 3,
+      "sample_budgets": [
+        500,
+        1000,
+        2500,
+        5000,
+        10000
+      ],
+      "repeats": 5
+    },
+    "num_features": 10,
+    "top_k": 5,
+    "lime_explainer_kwargs": {
+      "mode": "classification",
+      "kernel_width": null,
+      "kernel": null,
+      "discretize_continuous": true,
+      "discretizer": "quartile",
+      "feature_selection": "auto",
+      "sample_around_instance": false,
+      "verbose": false
+    },
+    "lime_distance_metric": "euclidean",
+    "ridge_alpha": 1.0,
+    "n_jobs": 1
+  },
+  "model_params": {
+    "memory": null,
+    "steps": [
+      [
+        "preprocess",
+        "ColumnTransformer(remainder='passthrough',\n                  transformers=[('numeric', StandardScaler(),\n                                 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])])"
+      ],
+      [
+        "classifier",
+        "LogisticRegression(max_iter=1000, random_state=42)"
+      ]
+    ],
+    "transform_input": null,
+    "verbose": false,
+    "preprocess": "ColumnTransformer(remainder='passthrough',\n                  transformers=[('numeric', StandardScaler(),\n                                 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])])",
+    "classifier": "LogisticRegression(max_iter=1000, random_state=42)",
+    "preprocess__force_int_remainder_cols": "deprecated",
+    "preprocess__n_jobs": null,
+    "preprocess__remainder": "passthrough",
+    "preprocess__sparse_threshold": 0.3,
+    "preprocess__transformer_weights": null,
+    "preprocess__transformers": [
+      [
+        "numeric",
+        "StandardScaler()",
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      ]
+    ],
+    "preprocess__verbose": false,
+    "preprocess__verbose_feature_names_out": true,
+    "preprocess__numeric": "StandardScaler()",
+    "preprocess__numeric__copy": true,
+    "preprocess__numeric__with_mean": true,
+    "preprocess__numeric__with_std": true,
+    "classifier__C": 1.0,
+    "classifier__class_weight": null,
+    "classifier__dual": false,
+    "classifier__fit_intercept": true,
+    "classifier__intercept_scaling": 1,
+    "classifier__l1_ratio": null,
+    "classifier__max_iter": 1000,
+    "classifier__multi_class": "deprecated",
+    "classifier__n_jobs": null,
+    "classifier__penalty": "l2",
+    "classifier__random_state": 42,
+    "classifier__solver": "lbfgs",
+    "classifier__tol": 0.0001,
+    "classifier__verbose": 0,
+    "classifier__warm_start": false
+  },
+  "train_shape": [
+    8000,
+    54
+  ],
+  "test_shape": [
+    2000,
+    54
+  ],
+  "fit_seconds": 0.14996958302799612,
+  "benchmark_seconds": 36.27638145798119
+}
