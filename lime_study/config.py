@@ -10,7 +10,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.pipeline import Pipeline
@@ -22,25 +21,33 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 RESULTS_DIR = PACKAGE_DIR / "results"
 FIGURES_DIR = PACKAGE_DIR / "figures"
 
-# --- Seeds and data split -------------------------------------------------
+# --- Seeds ----------------------------------------------------------------
 RANDOM_STATE = 42
-SAMPLE_SIZE = 10_000  # stratified modelling sample drawn from the full dataset
-TEST_SIZE = 0.20  # -> 8,000 train / 2,000 test
 BACKGROUND_SIZE = 2_000  # training rows passed to LimeTabularExplainer
 
-# --- Dataset block: the only place to change when adding a dataset -------
-DATASET_NAME = "covertype"
-N_NUMERIC = 10  # first 10 columns are continuous; the remaining 44 are binary indicators
-CLASS_NAMES = (
-    "Spruce/Fir",
-    "Lodgepole Pine",
-    "Ponderosa Pine",
-    "Cottonwood/Willow",
-    "Aspen",
-    "Douglas-fir",
-    "Krummholz",
+# --- Dataset block: UCI Human Activity Recognition Using Smartphones -------
+# 561 continuous features, 6 classes. Uses the official subject-based split
+# (21 training volunteers / 7,352 rows, 9 test volunteers / 2,947 rows).
+# Justification and sources: notes/dataset_justification.md
+DATASET_NAME = "uci_har"
+DATA_URL = (
+    "https://archive.ics.uci.edu/static/public/240/"
+    "human+activity+recognition+using+smartphones.zip"
 )
-FEATURE_COUNTS = (18, 36, 54)  # nested LIME perturbation subsets
+DATA_DOI = "10.24432/C54S4K"
+DATA_DIR = PACKAGE_DIR / "data"  # download cache (gitignored)
+N_TRAIN_ROWS = 7_352
+N_TEST_ROWS = 2_947
+N_FEATURES = 561
+CLASS_NAMES = (
+    "WALKING",
+    "WALKING_UPSTAIRS",
+    "WALKING_DOWNSTAIRS",
+    "SITTING",
+    "STANDING",
+    "LAYING",
+)
+FEATURE_COUNTS = (100, 300, 500)  # nested LIME perturbation subsets; 500 = TabFM max_num_features
 
 
 # --- Sweep ----------------------------------------------------------------
@@ -99,13 +106,9 @@ def build_xgboost() -> XGBClassifier:
 
 def build_logistic_regression() -> Pipeline:
     # lbfgs ignores n_jobs; single threading comes from the BLAS env vars in threads.py.
-    preprocess = ColumnTransformer(
-        [("numeric", StandardScaler(), list(range(N_NUMERIC)))],
-        remainder="passthrough",
-    )
     return Pipeline(
         [
-            ("preprocess", preprocess),
+            ("scaler", StandardScaler()),
             (
                 "classifier",
                 LogisticRegression(
@@ -142,11 +145,10 @@ def snapshot(sweep: Sweep) -> dict[str, Any]:
     """JSON-serialisable record of every shared setting, saved with each run."""
     return {
         "dataset": DATASET_NAME,
+        "data_url": DATA_URL,
+        "data_doi": DATA_DOI,
         "random_state": RANDOM_STATE,
-        "sample_size": SAMPLE_SIZE,
-        "test_size": TEST_SIZE,
         "background_size": BACKGROUND_SIZE,
-        "n_numeric": N_NUMERIC,
         "class_names": list(CLASS_NAMES),
         "feature_counts": list(FEATURE_COUNTS),
         "sweep": asdict(sweep),

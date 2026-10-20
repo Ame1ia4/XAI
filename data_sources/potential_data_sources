@@ -1,7 +1,7 @@
 Covertype 
     Link: https://archive.ics.uci.edu/dataset/31/covertype 
     Info: - ~580,000 rows with 54 features, classification of pixels into 7 forest cover types based on attributes such as elevation, aspect, slope, hillshade, soil-type, and more.
-    AI Ops: Recommend Starting Set 
+    AI Ops: Recommend Starting Set (previous dataset, replaced by UCI HAR - only 54 features, not high-dimensional enough)
 
 Poker Hand 
     Link: https://archive.ics.uci.edu/dataset/158/poker+hand
@@ -22,4 +22,8 @@ Census Income KDD
     Link: https://archive.ics.uci.edu/dataset/117/census+income+kdd
     Info: ~300,000 rows with 40 variables, of weighted census data extracted from the 1994 and 1995 current population surveys conducted by the U.S. Census Bureau
     AI Ops: Realistic message dataset
-    
+
+Human Activity Recognition Using Smartphones (UCI HAR)
+    Link: https://archive.ics.uci.edu/dataset/240/human+activity+recognition+using+smartphones
+    Info: 10,299 rows with 561 numeric features (time- and frequency-domain statistics from smartphone accelerometer/gyroscope signals), 6 activity classes, no missing values, recorded from 30 volunteers with an official subject-based train/test split (7,352 / 2,947). Also on OpenML (ID 1478) and part of the OpenML-CC18 benchmark suite. DOI 10.24432/C54S4K
+    AI Ops: CHOSEN DATASET (replaces Covertype). Hundreds of real, dense features for the dimensionality sweep; 100/300/500-feature LIME subsets stay within TabFM's 500-feature limit

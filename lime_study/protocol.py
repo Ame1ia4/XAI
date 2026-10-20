@@ -1,16 +1,22 @@
 """Shared data split, LIME benchmark, metrics, and result saving for every model.
 
-Ported from experiments/controlled_lime_protocol.py with identical sampling and
-measurement logic; LIME settings are now passed explicitly from config.
+Measurement logic is ported unchanged from experiments/controlled_lime_protocol.py;
+the dataset is UCI HAR (561 features) and LIME settings come explicitly from config.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import io
 import json
 import os
 import platform
+import shutil
+import ssl
 import sys
+import urllib.request
+import zipfile
 from datetime import datetime, timezone
 from importlib import metadata
 from itertools import combinations
@@ -21,9 +27,9 @@ from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
+import certifi
 from lime.lime_tabular import LimeTabularExplainer
 from scipy.stats import spearmanr
-from sklearn.datasets import fetch_covtype
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -31,7 +37,6 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
-from sklearn.model_selection import train_test_split
 
 from lime_study import config
 from lime_study.threads import thread_env_snapshot
@@ -42,27 +47,88 @@ PACKAGES = ("lime", "numpy", "pandas", "scipy", "scikit-learn", "xgboost", "matp
 
 
 # --- Data -----------------------------------------------------------------
-def load_controlled_covtype() -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-    """Return the same seeded, stratified 10k-row sample and 80/20 split for every model."""
-    dataset = fetch_covtype(as_frame=True)
-    X_full = dataset.data
-    y_full = dataset.target.astype(int) - 1  # 1..7 -> 0..6
+INNER_ZIP = "UCI HAR Dataset.zip"
+HAR_ROOT = "UCI HAR Dataset"
 
-    X_sample, _, y_sample, _ = train_test_split(
-        X_full,
-        y_full,
-        train_size=config.SAMPLE_SIZE,
-        random_state=config.RANDOM_STATE,
-        stratify=y_full,
-    )
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_sample,
-        y_sample,
-        test_size=config.TEST_SIZE,
-        random_state=config.RANDOM_STATE,
-        stratify=y_sample,
-    )
-    return X_train, X_test, y_train, y_test
+
+def _download_har() -> Path:
+    """Download the UCI HAR archive once into config.DATA_DIR and return its path."""
+    archive = config.DATA_DIR / "human_activity_recognition_using_smartphones.zip"
+    if not archive.exists():
+        config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+        print(f"Downloading UCI HAR from {config.DATA_URL} ...", flush=True)
+        partial = archive.with_suffix(".part")
+        # certifi's CA bundle: python.org macOS builds ship without system root certificates.
+        context = ssl.create_default_context(cafile=certifi.where())
+        with urllib.request.urlopen(config.DATA_URL, context=context) as response, open(
+            partial, "wb"
+        ) as handle:
+            shutil.copyfileobj(response, handle)
+        partial.rename(archive)
+    return archive
+
+
+def _unique_feature_names(names: list[str]) -> list[str]:
+    """features.txt repeats 42 bandsEnergy names three times; suffix repeats as __2, __3."""
+    seen: dict[str, int] = {}
+    unique = []
+    for name in names:
+        seen[name] = seen.get(name, 0) + 1
+        unique.append(name if seen[name] == 1 else f"{name}__{seen[name]}")
+    return unique
+
+
+def load_har() -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, dict[str, Any]]:
+    """Return the official subject-based UCI HAR split plus provenance metadata.
+
+    Train: 21 volunteers / 7,352 windows. Test: 9 other volunteers / 2,947 windows.
+    Labels are shifted from 1..6 to 0..5 to match model class positions.
+    """
+    archive = _download_har()
+    archive_sha256 = hashlib.sha256(archive.read_bytes()).hexdigest()
+    with zipfile.ZipFile(archive) as outer:
+        inner = zipfile.ZipFile(io.BytesIO(outer.read(INNER_ZIP)))
+
+    def read_table(member: str, **kwargs: Any) -> pd.DataFrame:
+        with inner.open(f"{HAR_ROOT}/{member}") as handle:
+            return pd.read_csv(handle, sep=r"\s+", header=None, **kwargs)
+
+    feature_names = _unique_feature_names(read_table("features.txt")[1].tolist())
+    activity_labels = read_table("activity_labels.txt")[1].tolist()
+    if tuple(activity_labels) != config.CLASS_NAMES:
+        raise AssertionError(f"Unexpected activity labels: {activity_labels}")
+
+    def read_split(split: str) -> tuple[pd.DataFrame, pd.Series, np.ndarray]:
+        X = read_table(f"{split}/X_{split}.txt", dtype=np.float64)
+        X.columns = feature_names
+        y = read_table(f"{split}/y_{split}.txt")[0].astype(int) - 1
+        subjects = read_table(f"{split}/subject_{split}.txt")[0].to_numpy()
+        return X, y.rename("activity"), subjects
+
+    X_train, y_train, train_subjects = read_split("train")
+    X_test, y_test, test_subjects = read_split("test")
+    # Give the test rows distinct indices so case indices never collide with training rows.
+    X_test.index = y_test.index = pd.RangeIndex(len(X_train), len(X_train) + len(X_test))
+
+    expected = {
+        "X_train": (X_train.shape, (config.N_TRAIN_ROWS, config.N_FEATURES)),
+        "X_test": (X_test.shape, (config.N_TEST_ROWS, config.N_FEATURES)),
+    }
+    for label, (actual, wanted) in expected.items():
+        if actual != wanted:
+            raise AssertionError(f"{label} has shape {actual}, expected {wanted}")
+    overlap = set(train_subjects) & set(test_subjects)
+    if overlap:
+        raise AssertionError(f"Subjects appear in both train and test: {sorted(overlap)}")
+
+    provenance = {
+        "data_url": config.DATA_URL,
+        "data_doi": config.DATA_DOI,
+        "archive_sha256": archive_sha256,
+        "train_subjects": sorted(int(s) for s in set(train_subjects)),
+        "test_subjects": sorted(int(s) for s in set(test_subjects)),
+    }
+    return X_train, X_test, y_train, y_test, provenance
 
 
 def selected_explanation_cases(
@@ -71,26 +137,24 @@ def selected_explanation_cases(
     per_class: int,
 ) -> pd.DataFrame:
     """Choose held-out rows per true class without conditioning on model predictions."""
-    labels = pd.Series(y_test.to_numpy(), index=X_test.index, name="cover_type")
+    labels = pd.Series(y_test.to_numpy(), index=X_test.index, name="activity")
     cases = (
-        X_test.assign(_cover_type=labels)
-        .groupby("_cover_type", group_keys=False, sort=True)
+        X_test.assign(_activity=labels)
+        .groupby("_activity", group_keys=False, sort=True)
         .sample(n=per_class, random_state=config.RANDOM_STATE)
     )
-    return cases.drop(columns="_cover_type").sort_index()
+    return cases.drop(columns="_activity").sort_index()
 
 
 def feature_subset(feature_count: int, n_features: int) -> list[int]:
-    """Return a fixed nested subset: all numeric features plus seeded binary indicators."""
-    numeric_indices = list(range(min(config.N_NUMERIC, n_features)))
-    categorical_indices = list(range(len(numeric_indices), n_features))
-    if feature_count < len(numeric_indices) or feature_count > n_features:
-        raise ValueError(
-            f"feature_count must be between {len(numeric_indices)} and {n_features}"
-        )
+    """Return a fixed nested subset: the first `feature_count` of one seeded permutation.
+
+    Using the same permutation for every count makes 100 ⊂ 300 ⊂ 500.
+    """
+    if not 1 <= feature_count <= n_features:
+        raise ValueError(f"feature_count must be between 1 and {n_features}")
     rng = np.random.default_rng(config.RANDOM_STATE)
-    shuffled_categorical = rng.permutation(categorical_indices).tolist()
-    return sorted(numeric_indices + shuffled_categorical[: feature_count - len(numeric_indices)])
+    return sorted(rng.permutation(n_features)[:feature_count].tolist())
 
 
 def make_predict_proba(
@@ -176,12 +240,6 @@ def benchmark_lime(
             subset_indices = feature_subset(feature_count, len(feature_names))
             subset_names = [feature_names[index] for index in subset_indices]
             background_subset = background.iloc[:, subset_indices].to_numpy()
-            categorical_positions = [
-                position
-                for position, original_index in enumerate(subset_indices)
-                if original_index >= config.N_NUMERIC
-            ]
-            categorical_names = {index: ["0", "1"] for index in categorical_positions}
 
             def predict_in_subset(rows: np.ndarray) -> np.ndarray:
                 # Features outside the subset stay at the case's observed values.
@@ -197,8 +255,6 @@ def benchmark_lime(
                         training_data=background_subset,
                         feature_names=subset_names,
                         class_names=list(config.CLASS_NAMES),
-                        categorical_features=categorical_positions,
-                        categorical_names=categorical_names,
                         random_state=seed,
                         **config.LIME_EXPLAINER_KWARGS,
                     )
@@ -350,7 +406,7 @@ def run_model_experiment(model_name: str, quick: bool = False) -> pd.DataFrame:
     out_dir = config.results_dir(sweep)
     print(f"[{model_name}] sweep={sweep.name} -> {out_dir}", flush=True)
 
-    X_train, X_test, y_train, y_test = load_controlled_covtype()
+    X_train, X_test, y_train, y_test, provenance = load_har()
     model = config.MODEL_BUILDERS[model_name]()
     fit_started = perf_counter()
     model.fit(X_train, y_train)
@@ -376,6 +432,7 @@ def run_model_experiment(model_name: str, quick: bool = False) -> pd.DataFrame:
         "thread_env": thread_env_snapshot(),
         "config": config.snapshot(sweep),
         "model_params": model.get_params(deep=True),
+        "data": provenance,
         "train_shape": list(X_train.shape),
         "test_shape": list(X_test.shape),
         "fit_seconds": fit_seconds,

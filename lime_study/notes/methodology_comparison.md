@@ -1,3 +1,5 @@
+> **Superseded (20-10-2026):** this note describes the earlier Covertype setup. The study now uses UCI HAR; see `lime_study_rebuild_plan.md` and `dataset_justification.md`.
+
 # Methodology comparison: intended design vs current implementation
 
 ## Scope

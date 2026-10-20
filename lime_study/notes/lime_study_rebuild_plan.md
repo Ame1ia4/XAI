@@ -1,5 +1,7 @@
 # Rebuild plan: controlled LIME cost/quality study (`lime_study/`)
 
+> **Update 20-10-2026:** the dataset changed from Covertype (54 features) to **UCI HAR (561 features)**. This document reflects the HAR setup. For the reasoning and sources, see [`dataset_justification.md`](dataset_justification.md) and `log_entries/20-10-2026.md`.
+
 ## Why we are rebuilding
 
 Paper: *Explainable AI: LIME Cost/Quality Scaling on High-Dimensional Tabular Data across multiple models.*
@@ -10,7 +12,7 @@ The paper measures three things:
 - **Fidelity:** LIME's local surrogate fit, `explanation.score`.
 - **Stability:** top-5 Jaccard and Spearman agreement across repeated runs.
 
-Each is measured across perturbed-feature counts of 18, 36 and 54 and LIME sample budgets from 500 to 10,000. The models are XGBoost, Logistic Regression and Random Forest. TabFM is left out for now.
+Each is measured across perturbed-feature counts of 100, 300 and 500 and LIME sample budgets from 500 to 10,000. The models are XGBoost, Logistic Regression and Random Forest. TabFM is left out for now.
 
 The notebooks in `experiments/` are not usable as the controlled study. `methodology_comparison.md` and `experiment_handoff.md` in this folder list the problems:
 
@@ -26,10 +28,10 @@ The notebooks in `experiments/` are not usable as the controlled study. `methodo
 
 | Topic | Decision |
 |---|---|
-| Data | Covertype (`fetch_covtype`). Stratified 10,000-row sample (seed 42), then stratified 80/20 split (8,000 train / 2,000 test, seed 42). The methodology must state that models are trained on this sample, not on all 581,012 rows. |
-| LIME background | 2,000 training rows, seed 42. We do not use the 50,000 from the brief, because the training split only has 8,000 rows. |
-| Explained cases | 3 test rows per true class (21 cases), seed 42, chosen without looking at any model's predictions. The predicted class is the label that gets explained. |
-| Feature-count axis | Nested subsets of 18, 36 and 54 features. All 10 numeric features are always included, plus binary indicators taken from one seeded permutation. Features outside the subset are held at the case's own values. Models always predict on full 54-column rows, so the models are **not** retrained per feature count. |
+| Data | UCI HAR (DOI 10.24432/C54S4K), downloaded from UCI. Official **subject-based** split: 21 volunteers / 7,352 rows for training, 9 other volunteers / 2,947 rows for testing (≈70/30). No volunteer appears in both. Models train on the full training set. |
+| LIME background | 2,000 training rows, seed 42. We do not use the 50,000 from the brief, because the training split only has 7,352 rows. |
+| Explained cases | 3 test rows per true class (18 cases), seed 42, chosen without looking at any model's predictions. The predicted class is the label that gets explained. |
+| Feature-count axis | Nested subsets of 100, 300 and 500 features: the first k of one seeded permutation of all 561 features. Features outside the subset are held at the case's own values. Models always predict on full 561-column rows, so the models are **not** retrained per feature count. 500 is TabFM's `max_num_features`. |
 | Budgets / repeats | `num_samples` of 500, 1,000, 2,500, 5,000 and 10,000. 5 repeats with explainer seeds 42–46. 10 reported features. Top-k for stability is 5. |
 | LIME settings (now explicit) | `lime==0.2.0.1`, `discretize_continuous=True`, `discretizer="quartile"`, `kernel_width=None` (LIME default `0.75·sqrt(d)`, where d = number of perturbed features), `feature_selection="auto"` (which resolves to `highest_weights` at 10 features), `sample_around_instance=False`, euclidean distance, Ridge surrogate with `alpha=1`. |
 | Runtime fairness | **All models run single-threaded:** `n_jobs=1`, and the BLAS/OpenMP thread environment variables are set to 1. Models run one after another, each in its own process. |
@@ -38,12 +40,12 @@ The notebooks in `experiments/` are not usable as the controlled study. `methodo
 | Fidelity | `explanation.score`, the weighted local R² of the surrogate. Label it "local surrogate fit", not accuracy. We do not measure `local_pred` agreement. |
 | Stability | For each case × feature count × budget, all 10 pairs of the 5 repeats are compared using top-5 Jaccard (intersection over union) and Spearman over the union of selected features. |
 | Hyperparameters | These are unchanged from the notebooks except for `n_jobs` and `random_state`. Models are **not** tuned or matched to each other. The comparison uses a shared evaluation setup, not equally optimised models. |
-| Dataset scope | Covertype only. All dataset-specific values are kept in one block of `config.py`, so a higher-dimensional dataset can be added later. |
+| Dataset scope | UCI HAR only (Covertype removed). All dataset-specific values are kept in one block of `config.py`. All features are continuous, so there are no categorical features in the explainer. |
 
 Model definitions (in `config.py`):
 
 - **XGBoost:** `XGBClassifier(n_estimators=250, max_depth=6, learning_rate=0.1, subsample=0.9, colsample_bytree=0.9, objective="multi:softprob", eval_metric="mlogloss", tree_method="hist", random_state=42, n_jobs=1)`
-- **Logistic Regression:** a `Pipeline` that standardises the 10 numeric columns and passes the binary columns through unchanged, followed by `LogisticRegression(max_iter=1000, solver="lbfgs", random_state=42)`. The model's `n_jobs` setting has no effect with lbfgs, so the thread environment variables are what keep it single-threaded.
+- **Logistic Regression:** a `Pipeline` that standardises all 561 columns, followed by `LogisticRegression(max_iter=1000, solver="lbfgs", random_state=42)`. The model's `n_jobs` setting has no effect with lbfgs, so the thread environment variables are what keep it single-threaded.
 - **Random Forest:** `RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=1)`
 
 ## Folder layout
@@ -72,15 +74,15 @@ lime_study/
 
 | File | Contents |
 |---|---|
-| `<Model>_raw.csv` | One row per explanation (1,575 rows): case, true/predicted class, feature count, budget, repeat, runtime, fidelity, and the explanation's feature weights as JSON |
-| `<Model>_stability.csv` | One row per repeat pair (3,150 rows): Spearman and top-5 Jaccard |
+| `<Model>_raw.csv` | One row per explanation (1,350 rows): case, true/predicted class, feature count, budget, repeat, runtime, fidelity, and the explanation's feature weights as JSON |
+| `<Model>_stability.csv` | One row per repeat pair (2,700 rows): Spearman and top-5 Jaccard |
 | `<Model>_summary.csv` | One row per feature count × budget (15 rows): mean/median/std runtime, mean/median/std fidelity, mean/std Spearman and Jaccard, NaN counts |
-| `<Model>_performance.json` | Test-set accuracy, balanced accuracy, and macro precision/recall/F1 (2,000 rows) |
-| `<Model>_run_meta.json` | Timestamp, machine/CPU, Python and package versions, thread settings, config snapshot, model parameters, fit time, total benchmark time |
+| `<Model>_performance.json` | Test-set accuracy, balanced accuracy, and macro precision/recall/F1 (2,947 test rows) |
+| `<Model>_run_meta.json` | Timestamp, machine/CPU, Python and package versions, data source/DOI/archive SHA-256 and train/test subject IDs, thread settings, config snapshot, model parameters, fit time, total benchmark time |
 
 ### Figures (`figures/`)
 
-- `lime_scaling_grid.png/.pdf`: a 3×3 grid. Rows are runtime, fidelity and top-5 Jaccard; columns are 18, 36 and 54 features. The x axis is `num_samples` on a log scale. There is one line per model, with ±1 std bands.
+- `lime_scaling_grid.png/.pdf`: a 3×3 grid. Rows are runtime, fidelity and top-5 Jaccard; columns are 100, 300 and 500 features. The x axis is `num_samples` on a log scale. There is one line per model, with ±1 std bands.
 - `cost_vs_quality.png/.pdf`: mean runtime on the x axis (log) against Jaccard on the y axis, one line per model and feature count, with points ordered by budget. This shows where extra compute stops improving quality.
 - `stability_spearman.png/.pdf`: the Spearman version of the stability row.
 - `combined_summary.csv` (45 rows) and `performance_table.csv`.
@@ -91,8 +93,8 @@ From the repository root, with the project venv active:
 
 ```bash
 pip install -r lime_study/requirements-pinned.txt
-python -m lime_study.run_all --quick     # smoke test (~1 min); writes to results/quick and figures/quick
-python -m lime_study.run_all             # full study: 4,725 explanations
+python -m lime_study.run_all --quick     # smoke test (~1.5 min); writes to results/quick and figures/quick
+python -m lime_study.run_all             # full study: 4,050 explanations
 python -m lime_study.run_all --models RandomForest     # one model only
 python -m lime_study.run_all --plots-only              # re-plot from saved CSVs
 ```
@@ -103,8 +105,10 @@ Close other heavy programs while the full run is going, because runtime is one o
 
 Each model run asserts the expected counts before it saves anything:
 
-- 1,575 raw rows, 3,150 stability rows and 15 summary rows;
-- 21 cases and 105 runs in every group.
+- 1,350 raw rows, 2,700 stability rows and 15 summary rows;
+- 18 cases and 90 runs in every group.
+
+`load_har()` also asserts the train/test shapes, the class names, and that no volunteer is in both sets.
 
 It warns if any stability values are NaN. `plot_results.py` checks that the combined summary has 45 rows.
 
@@ -112,7 +116,7 @@ Sanity checks to do by eye after a full run:
 
 - runtime grows roughly linearly with `num_samples`;
 - Jaccard rises (or levels off) as the budget increases;
-- RF and XGBoost accuracy is above Logistic Regression's;
+- test accuracy is around 0.9 or higher for every model (the original paper's SVM reached 96%);
 - `run_meta.json` shows `lime 0.2.0.1` and the thread settings at 1;
 - re-running one model gives identical fidelity and stability, and only the runtimes change.
 
@@ -129,8 +133,9 @@ Sanity checks to do by eye after a full run:
 
 ## Limitations to state in the paper
 
-- Models are trained on a 10,000-row sample, and the LIME background is 2,000 rows.
-- The 21 explained cases are balanced by class, unlike the test set, so LIME diagnostic means are averaged over this balanced set.
+- The LIME background is 2,000 of the 7,352 training rows.
+- The 18 explained cases are balanced by class, unlike the test set, so LIME diagnostic means are averaged over this balanced set.
 - Runtime is total explanation time, not split by stage. It includes the cost of building the DataFrame in the shared prediction wrapper, which is the same for every model.
-- LIME perturbations can create combinations of binary wilderness/soil indicators that never occur in the real data.
+- LIME samples each perturbed feature independently, so perturbations can break the strong correlations between HAR's features (many are statistics of the same signal) and produce unrealistic rows.
+- Perturbed-feature subsets are chosen at random (seeded), not by importance, so a 100-feature subset may contain few of the model's most important features.
 - Kernel width scales with the number of perturbed features (LIME default). This is part of what the feature-count axis measures.
