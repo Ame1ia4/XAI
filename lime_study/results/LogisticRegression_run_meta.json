@@ -1,6 +1,6 @@
 {
   "model": "LogisticRegression",
-  "timestamp_utc": "2026-10-20T15:37:27.852955+00:00",
+  "timestamp_utc": "2026-10-20T21:06:34.544297+00:00",
   "python": "3.13.7 (v3.13.7:bcee1c32211, Aug 14 2025, 19:10:51) [Clang 16.0.0 (clang-1600.0.26.6)]",
   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "machine": "arm64",
@@ -151,6 +151,6 @@
     2947,
     561
   ],
-  "fit_seconds": 0.7162349580321461,
-  "benchmark_seconds": 423.16305483400356
+  "fit_seconds": 0.7191019169986248,
+  "benchmark_seconds": 412.33854558400344
 }

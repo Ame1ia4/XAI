@@ -1,6 +1,6 @@
 # lime_study: controlled LIME cost/quality benchmark
 
-This folder holds the controlled experiment for the paper *LIME Cost/Quality Scaling on High-Dimensional Tabular Data across multiple models*. It measures LIME **runtime**, **local fidelity** (`explanation.score`) and **stability** (top-5 Jaccard and Spearman across repeated runs) for XGBoost, Logistic Regression and Random Forest on **UCI HAR** (561 features, 6 classes, official subject-based train/test split). The sweep covers 100, 300 and 500 perturbed features and 500 to 10,000 LIME samples. The dataset choice and its sources are in [`notes/dataset_justification.md`](notes/dataset_justification.md).
+This folder holds the controlled experiment for the paper *LIME Cost/Quality Scaling on High-Dimensional Tabular Data across multiple models*. It measures LIME **runtime**, **local fidelity** (`explanation.score`) and **stability** (top-5 Jaccard across repeated runs) for XGBoost, Logistic Regression and Random Forest on **UCI HAR** (561 features, 6 classes, official subject-based train/test split). The sweep covers 100, 300 and 500 perturbed features and 500 to 10,000 LIME samples. The dataset choice and its sources are in [`notes/dataset_justification.md`](notes/dataset_justification.md).
 
 The full methodology, the decisions behind it and the list of changes from the old notebooks are in [`notes/lime_study_rebuild_plan.md`](notes/lime_study_rebuild_plan.md). Only results from this folder should go into the paper. The notebooks in `experiments/` are kept for reference only.
 
@@ -33,13 +33,13 @@ The first run downloads the UCI HAR archive (~60 MB) into `lime_study/data/`, wh
 ## Outputs
 
 - `results/<Model>_raw.csv`: one row per explanation, with runtime, fidelity, seed and feature weights.
-- `results/<Model>_stability.csv`: one row per pair of repeats, with Spearman and top-5 Jaccard.
+- `results/<Model>_stability.csv`: one row per pair of repeats, with top-5 Jaccard.
 - `results/<Model>_summary.csv`: one row per feature count × budget.
 - `results/<Model>_performance.json`: held-out accuracy, balanced accuracy and macro P/R/F1.
 - `results/<Model>_run_meta.json`: machine, package versions, thread settings, full config, model parameters and timings.
 - `figures/lime_scaling_grid.{png,pdf}`: 3×3 grid of runtime, fidelity and Jaccard against budget, with one column per feature count. All axes are linear.
 - `figures/cost_vs_quality.{png,pdf}`: Jaccard against runtime.
-- `figures/stability_spearman.{png,pdf}`, `figures/combined_summary.csv`, `figures/performance_table.csv`.
+- `figures/combined_summary.csv`, `figures/performance_table.csv`.
 
 Each model run checks the expected row counts before saving and fails if they don't match.
 

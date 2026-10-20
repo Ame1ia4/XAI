@@ -29,7 +29,6 @@ import numpy as np
 import pandas as pd
 import certifi
 from lime.lime_tabular import LimeTabularExplainer
-from scipy.stats import spearmanr
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -187,14 +186,12 @@ def evaluate_predictive_performance(
     }
 
 
-def pairwise_stability(first: np.ndarray, second: np.ndarray) -> tuple[float, float]:
-    """Spearman over the union of selected features, and top-k Jaccard."""
-    selected = np.flatnonzero((first != 0) | (second != 0))
-    correlation = (
-        float(spearmanr(first[selected], second[selected]).statistic)
-        if len(selected) >= 2
-        else np.nan
-    )
+def pairwise_jaccard(first: np.ndarray, second: np.ndarray) -> float:
+    """Top-k Jaccard: shared top-k features (by |weight|) over their union.
+
+    Spearman was dropped (20-10-2026): zero-filling unselected features makes its
+    chance level depend on each model's weight signs, so it is not comparable across models.
+    """
 
     def top_k(weights: np.ndarray) -> set[int]:
         nonzero = np.flatnonzero(weights)
@@ -202,8 +199,7 @@ def pairwise_stability(first: np.ndarray, second: np.ndarray) -> tuple[float, fl
 
     first_top, second_top = top_k(first), top_k(second)
     union = first_top | second_top
-    jaccard = len(first_top & second_top) / len(union) if union else np.nan
-    return correlation, jaccard
+    return len(first_top & second_top) / len(union) if union else np.nan
 
 
 # --- Benchmark ------------------------------------------------------------
@@ -297,15 +293,13 @@ def benchmark_lime(
                     )
 
                 for first, second in combinations(vectors, 2):
-                    spearman, jaccard = pairwise_stability(first, second)
                     stability_rows.append(
                         {
                             "model": model_name,
                             "case_index": case_index,
                             "feature_count": feature_count,
                             "num_samples": budget,
-                            "spearman": spearman,
-                            f"top{config.TOP_K}_jaccard": jaccard,
+                            f"top{config.TOP_K}_jaccard": pairwise_jaccard(first, second),
                         }
                     )
         print(
@@ -332,10 +326,7 @@ def summarise(raw: pd.DataFrame, stability: pd.DataFrame) -> pd.DataFrame:
         fidelity_std=("local_fidelity_score", "std"),
     )
     stability_summary = stability.groupby(GROUP_COLUMNS, as_index=False).agg(
-        stability_pairs=("spearman", "size"),
-        spearman_mean=("spearman", "mean"),
-        spearman_std=("spearman", "std"),
-        spearman_nan=("spearman", lambda s: int(s.isna().sum())),
+        stability_pairs=(jaccard, "size"),
         jaccard_mean=(jaccard, "mean"),
         jaccard_std=(jaccard, "std"),
         jaccard_nan=(jaccard, lambda s: int(s.isna().sum())),
@@ -364,7 +355,7 @@ def validate(
         raise AssertionError(f"Every group should contain {n_cases} cases")
     if not (summary["explanation_runs"] == n_cases * sweep.repeats).all():
         raise AssertionError(f"Every group should contain {n_cases * sweep.repeats} runs")
-    nan_total = int(summary["spearman_nan"].sum() + summary["jaccard_nan"].sum())
+    nan_total = int(summary["jaccard_nan"].sum())
     if nan_total:
         print(f"WARNING: {nan_total} NaN stability values; inspect *_stability.csv", flush=True)
 

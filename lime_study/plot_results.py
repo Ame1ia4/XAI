@@ -188,24 +188,6 @@ def plot_cost_vs_quality(summary: pd.DataFrame, out_dir) -> None:
     _save(fig, out_dir, "cost_vs_quality")
 
 
-def plot_spearman(summary: pd.DataFrame, sweep: config.Sweep, out_dir) -> None:
-    fig, axes = plt.subplots(
-        1, len(config.FEATURE_COUNTS), figsize=(FULL_WIDTH_IN, 2.4), sharex=True, sharey=True
-    )
-    for ax, feature_count in zip(axes, config.FEATURE_COUNTS):
-        _plot_metric(
-            ax, summary[summary["feature_count"] == feature_count], "spearman_mean", "spearman_std"
-        )
-        _format_budget_axis(ax, sweep.sample_budgets)
-        ax.set_title(f"{feature_count} perturbed features")
-        ax.set_xlabel("LIME samples (num_samples)")
-    axes[0].set_ylabel("Spearman stability")
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=len(labels), bbox_to_anchor=(0.5, 1.08))
-    fig.tight_layout()
-    _save(fig, out_dir, "stability_spearman")
-
-
 def main(quick: bool = False) -> None:
     sweep = config.QUICK_SWEEP if quick else config.FULL_SWEEP
     out_dir = config.figures_dir(sweep)
@@ -216,7 +198,6 @@ def main(quick: bool = False) -> None:
     performance_table(sweep).to_csv(out_dir / "performance_table.csv", index=False)
     plot_scaling_grid(summary, sweep, out_dir)
     plot_cost_vs_quality(summary, out_dir)
-    plot_spearman(summary, sweep, out_dir)
     print(f"Figures and tables written to {out_dir}")
 
 

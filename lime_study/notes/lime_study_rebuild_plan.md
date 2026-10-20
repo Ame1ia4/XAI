@@ -10,7 +10,7 @@ The paper measures three things:
 
 - **Runtime:** wall-clock time per explanation.
 - **Fidelity:** LIME's local surrogate fit, `explanation.score`.
-- **Stability:** top-5 Jaccard and Spearman agreement across repeated runs.
+- **Stability:** top-5 Jaccard agreement across repeated runs.
 
 Each is measured across perturbed-feature counts of 100, 300 and 500 and LIME sample budgets from 500 to 10,000. The models are XGBoost, Logistic Regression and Random Forest. TabFM is left out for now.
 
@@ -38,7 +38,7 @@ The notebooks in `experiments/` are not usable as the controlled study. `methodo
 | Model seeds | `random_state=42` on **every** model, including Logistic Regression. |
 | Runtime definition | Total wall-clock time of `explain_instance()` (`perf_counter`). This covers perturbation, model probability calls and surrogate fitting. It excludes model training, the warm-up call and explainer construction. We do **not** time individual stages. |
 | Fidelity | `explanation.score`, the weighted local R² of the surrogate. Label it "local surrogate fit", not accuracy. We do not measure `local_pred` agreement. |
-| Stability | For each case × feature count × budget, all 10 pairs of the 5 repeats are compared using top-5 Jaccard (intersection over union) and Spearman over the union of selected features. |
+| Stability | For each case × feature count × budget, all 10 pairs of the 5 repeats are compared using top-5 Jaccard (intersection over union). Spearman was dropped on 20-10-2026 because its values aren't comparable across models (see `log_entries/20-10-2026.md`). |
 | Hyperparameters | These are unchanged from the notebooks except for `n_jobs` and `random_state`. Models are **not** tuned or matched to each other. The comparison uses a shared evaluation setup, not equally optimised models. |
 | Dataset scope | UCI HAR only (Covertype removed). All dataset-specific values are kept in one block of `config.py`. All features are continuous, so there are no categorical features in the explainer. |
 
@@ -75,8 +75,8 @@ lime_study/
 | File | Contents |
 |---|---|
 | `<Model>_raw.csv` | One row per explanation (1,350 rows): case, true/predicted class, feature count, budget, repeat, runtime, fidelity, and the explanation's feature weights as JSON |
-| `<Model>_stability.csv` | One row per repeat pair (2,700 rows): Spearman and top-5 Jaccard |
-| `<Model>_summary.csv` | One row per feature count × budget (15 rows): mean/median/std runtime, mean/median/std fidelity, mean/std Spearman and Jaccard, NaN counts |
+| `<Model>_stability.csv` | One row per repeat pair (2,700 rows): top-5 Jaccard |
+| `<Model>_summary.csv` | One row per feature count × budget (15 rows): mean/median/std runtime, mean/median/std fidelity, mean/std Jaccard, NaN count |
 | `<Model>_performance.json` | Test-set accuracy, balanced accuracy, and macro precision/recall/F1 (2,947 test rows) |
 | `<Model>_run_meta.json` | Timestamp, machine/CPU, Python and package versions, data source/DOI/archive SHA-256 and train/test subject IDs, thread settings, config snapshot, model parameters, fit time, total benchmark time |
 
@@ -84,7 +84,6 @@ lime_study/
 
 - `lime_scaling_grid.png/.pdf`: a 3×3 grid. Rows are runtime, fidelity and top-5 Jaccard; columns are 100, 300 and 500 features. The x axis is `num_samples` on a linear scale from 0, and all axes are linear. There is one line per model, with ±1 std bands.
 - `cost_vs_quality.png/.pdf`: mean runtime on the x axis (linear) against Jaccard on the y axis, one line per model and feature count, with points ordered by budget. This shows where extra compute stops improving quality.
-- `stability_spearman.png/.pdf`: the Spearman version of the stability row.
 - `combined_summary.csv` (45 rows) and `performance_table.csv`.
 
 ## How to run

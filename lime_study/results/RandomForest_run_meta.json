@@ -1,6 +1,6 @@
 {
   "model": "RandomForest",
-  "timestamp_utc": "2026-10-20T15:45:10.635910+00:00",
+  "timestamp_utc": "2026-10-20T21:14:00.258774+00:00",
   "python": "3.13.7 (v3.13.7:bcee1c32211, Aug 14 2025, 19:10:51) [Clang 16.0.0 (clang-1600.0.26.6)]",
   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "machine": "arm64",
@@ -137,6 +137,6 @@
     2947,
     561
   ],
-  "fit_seconds": 8.479599832964595,
-  "benchmark_seconds": 451.93941749999067
+  "fit_seconds": 8.236363124975469,
+  "benchmark_seconds": 435.2716016659979
 }
