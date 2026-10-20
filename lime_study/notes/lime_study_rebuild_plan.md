@@ -82,8 +82,8 @@ lime_study/
 
 ### Figures (`figures/`)
 
-- `lime_scaling_grid.png/.pdf`: a 3×3 grid. Rows are runtime, fidelity and top-5 Jaccard; columns are 100, 300 and 500 features. The x axis is `num_samples` on a log scale. There is one line per model, with ±1 std bands.
-- `cost_vs_quality.png/.pdf`: mean runtime on the x axis (log) against Jaccard on the y axis, one line per model and feature count, with points ordered by budget. This shows where extra compute stops improving quality.
+- `lime_scaling_grid.png/.pdf`: a 3×3 grid. Rows are runtime, fidelity and top-5 Jaccard; columns are 100, 300 and 500 features. The x axis is `num_samples` on a linear scale from 0, and all axes are linear. There is one line per model, with ±1 std bands.
+- `cost_vs_quality.png/.pdf`: mean runtime on the x axis (linear) against Jaccard on the y axis, one line per model and feature count, with points ordered by budget. This shows where extra compute stops improving quality.
 - `stability_spearman.png/.pdf`: the Spearman version of the stability row.
 - `combined_summary.csv` (45 rows) and `performance_table.csv`.
 

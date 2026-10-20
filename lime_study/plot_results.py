@@ -13,7 +13,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.ticker import FuncFormatter, NullFormatter  # noqa: E402
+from matplotlib.ticker import FuncFormatter  # noqa: E402
 import pandas as pd  # noqa: E402
 
 from lime_study import config  # noqa: E402
@@ -92,11 +92,6 @@ def _by_model(data: pd.DataFrame):
             yield model, group
 
 
-def _plain_log_ticks(axis) -> None:
-    axis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}"))
-    axis.set_minor_formatter(NullFormatter())
-
-
 def _plot_metric(ax, data: pd.DataFrame, mean: str, std: str | None) -> None:
     for model, group in _by_model(data):
         style = MODEL_STYLE[model]
@@ -113,10 +108,15 @@ def _plot_metric(ax, data: pd.DataFrame, mean: str, std: str | None) -> None:
 
 
 def _format_budget_axis(ax, budgets: tuple[int, ...]) -> None:
-    ax.set_xscale("log")
-    ax.set_xticks(budgets)
-    ax.set_xticklabels([f"{b / 1000:g}k" if b >= 1000 else str(b) for b in budgets])
-    ax.minorticks_off()
+    """Linear budget axis from 0, so spacing is proportional to the number of samples.
+
+    Markers sit at the true budgets; ticks use round values because 500 and 1k
+    would overlap if each budget were labelled.
+    """
+    ax.set_xlim(0, max(budgets) * 1.05)
+    ax.xaxis.set_major_formatter(
+        FuncFormatter(lambda value, _: f"{value / 1000:g}k" if value >= 1000 else f"{value:g}")
+    )
 
 
 def _save(fig, out_dir, name: str) -> None:
@@ -146,15 +146,11 @@ def plot_scaling_grid(summary: pd.DataFrame, sweep: config.Sweep, out_dir) -> No
             _format_budget_axis(ax, sweep.sample_budgets)
             if row == 0:
                 ax.set_title(f"{feature_count} perturbed features")
-                ax.set_yscale("log")
-                _plain_log_ticks(ax.yaxis)
             if col == 0:
                 ax.set_ylabel(label)
             if row == len(rows) - 1:
                 ax.set_xlabel("LIME samples (num_samples)")
-    # On the log runtime row, mean - std can be <= 0; floor the axis at half the
-    # smallest mean so those bands run off the bottom instead of flattening the plot.
-    axes[0, 0].set_ylim(bottom=summary["runtime_mean_seconds"].min() / 2)
+    axes[0, 0].set_ylim(bottom=0)
     handles, labels = axes[0, 0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=len(labels), bbox_to_anchor=(0.5, 1.02))
     fig.tight_layout(rect=(0, 0, 1, 0.97))
@@ -174,10 +170,10 @@ def plot_cost_vs_quality(summary: pd.DataFrame, out_dir) -> None:
                 label=MODEL_LABELS[model],
                 **MODEL_STYLE[model],
             )
-        ax.set_xscale("log")
-        _plain_log_ticks(ax.xaxis)
         ax.set_title(f"{feature_count} perturbed features")
         ax.set_xlabel("Mean runtime per explanation (s)")
+    # Shared axis: set the range once from all panels so no panel's data is clipped.
+    axes[0].set_xlim(0, summary["runtime_mean_seconds"].max() * 1.05)
     axes[0].set_ylabel(f"Top-{config.TOP_K} Jaccard stability")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=len(labels), bbox_to_anchor=(0.5, 1.08))

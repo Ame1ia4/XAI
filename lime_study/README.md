@@ -37,7 +37,7 @@ The first run downloads the UCI HAR archive (~60 MB) into `lime_study/data/`, wh
 - `results/<Model>_summary.csv`: one row per feature count × budget.
 - `results/<Model>_performance.json`: held-out accuracy, balanced accuracy and macro P/R/F1.
 - `results/<Model>_run_meta.json`: machine, package versions, thread settings, full config, model parameters and timings.
-- `figures/lime_scaling_grid.{png,pdf}`: 3×3 grid of runtime, fidelity and Jaccard against budget, with one column per feature count.
+- `figures/lime_scaling_grid.{png,pdf}`: 3×3 grid of runtime, fidelity and Jaccard against budget, with one column per feature count. All axes are linear.
 - `figures/cost_vs_quality.{png,pdf}`: Jaccard against runtime.
 - `figures/stability_spearman.{png,pdf}`, `figures/combined_summary.csv`, `figures/performance_table.csv`.
 
