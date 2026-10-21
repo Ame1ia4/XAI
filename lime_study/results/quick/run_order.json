@@ -1,0 +1,7 @@
+{
+  "model_order": [
+    "RandomForest",
+    "LogisticRegression",
+    "XGBoost"
+  ]
+}

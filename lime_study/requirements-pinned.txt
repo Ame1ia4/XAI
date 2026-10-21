@@ -1,6 +1,7 @@
 # Exact versions used for the controlled LIME study (Python 3.13).
 # Named requirements-pinned.txt because the repo .gitignore ignores every "requirements.txt".
 lime==0.2.0.1
+certifi==2026.7.22
 numpy==2.2.6
 pandas==2.3.3
 scipy==1.15.3

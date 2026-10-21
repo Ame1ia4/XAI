@@ -1,4 +1,4 @@
-"""Controlled LIME cost/quality study on Covertype.
+"""Controlled LIME cost/quality study on UCI HAR (561 features).
 
 Importing the package pins numerical libraries to one thread before numpy loads,
 so every entry point (`python -m lime_study....`) gets the same threading.
