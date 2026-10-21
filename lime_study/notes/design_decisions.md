@@ -40,14 +40,15 @@ Each decision is marked as one of:
 | Decision | Value | Type | Why |
 |---|---|---|---|
 | Cases per class | 5 (30 total) | Literature + judgement | Cases are the independent units for every interval and test (Hurlbert, 1984). With n per class, the bootstrap variance is too small by (n − 1)/n: 0.67 at 3, 0.80 at 5 (Efron & Tibshirani, 1993). 5 balances this against runtime (~5/3 of the 3-per-class cost). The test set has 420–537 rows per class. |
-| Selection | Seeded random sample per true class, made before any model is fitted | Literature | Selection can't depend on any model, so no model gets easier rows. Classes are balanced, unlike the test set; state that means are over a class-balanced set. |
+| Selection | Round the classes in turn; each pick is the row (seeded random order) whose participant has supplied the fewest cases so far. Made before any model is fitted | Literature + judgement | Selection can't depend on any model, so no model gets easier rows. Classes are balanced, unlike the test set; state that means are over a class-balanced set. Spreading across participants keeps the variance inflation from correlated cases as small as possible for 30 cases (Kish, 1965). See `claim_safe_fixes.md` fix 19. |
+| Cases per participant | At most 4 (`MAX_CASES_PER_SUBJECT`); result 4, 4, 4, 3, 3, 3, 3, 3, 3 over the 9 test participants | Judgement | 30 cases ÷ 9 participants = 3.33, so 4 is the smallest cap that can be met without dropping cases. The old selection gave up to 7 from one participant. |
 | Class explained | The row's **true** class, for every model | Literature | All models must explain the same quantity for a controlled comparison. LIME explains one chosen class at a time (Ribeiro et al., 2016). `correct` records whether each model predicted it. |
 
 ## The d axis (perturbed features)
 
 | Decision | Value | Type | Why |
 |---|---|---|---|
-| Feature counts | 50, 100, 300, 500 | Judgement + literature | 500 is TabFM's `max_num_features`, kept for comparability with the original plan. 50 adds a fourth point for estimating the runtime exponent in d (Goldsmith et al., 2007) and is never underdetermined. 100 and 300 fill the range. |
+| Feature counts | 50, 100, 300, 500 | Judgement + literature | 500 is TabFM's `max_num_features`, kept for comparability with the original plan. 50 adds a fourth point for estimating the runtime exponent in d (Goldsmith et al., 2007) and never has a low sample-to-feature ratio. 100 and 300 fill the range. |
 | Subsets | Nested prefixes of one seeded random permutation (50 ⊂ 100 ⊂ 300 ⊂ 500) | Judgement | Nesting means a larger d only adds features, so changes with d aren't caused by swapping features out. The same subsets are used for every model. |
 | Features outside the subset | Held at the case's own values | Judgement | The model always sees all 561 features. Each d therefore explains a slightly different function (the model with other features fixed). State this in the paper. |
 | Sensitivity check: `ranked_subset` | Top-d features by ANOVA F against the training labels | Literature | A standard model-free filter (Guyon & Elisseeff, 2003). It checks whether trends come from random subsets holding little signal. Every model still gets the same subsets. |
@@ -59,7 +60,7 @@ Each decision is marked as one of:
 | Budgets | 500, 1,000, 2,500, 5,000, 10,000 | Default + judgement | They bracket LIME's default `num_samples=5000` (`lime_tabular.py`). The roughly doubling steps give a usable cost–quality curve. |
 | Primary budget | 5,000 | Default | LIME's default, chosen before seeing results, so the main comparisons describe LIME as typically used. |
 | Repeats | 5 per setting (seeds derived per case) | Judgement | 5 repeats give 10 pairs for stability per case × setting. Repeat-to-repeat variability is the quantity of interest (Visani et al., 2022). |
-| Underdetermined settings | N ≤ d flagged, out of trend lines and the primary family | Literature | Ridge feature selection over d features from N ≤ d samples is underdetermined (Hastie et al., 2009, ch. 18). Only N = 500 at d = 500 qualifies. |
+| Low sample-to-feature ratio | N ≤ d flagged `low_sample_ratio`, out of trend lines and the primary family | Literature | Ridge feature selection over d features from N ≤ d samples is mostly noise (Hastie et al., 2009, ch. 18). The ridge is regularised, so it is not strictly underdetermined. Only N = 500 at d = 500 qualifies. |
 
 ## LIME settings (all passed explicitly; `lime==0.2.0.1`)
 
@@ -88,7 +89,7 @@ Each decision is marked as one of:
 | Decision | Value | Type | Why |
 |---|---|---|---|
 | Held-out set size | 5,000 perturbations per case × d | Judgement | The same size as LIME's default budget. Large enough that the weighted R²/RMSE estimates are precise, and the set is shared by every budget, repeat and model. |
-| Held-out metrics | Kernel-weighted R² and RMSE | Literature | LIME's own locality-weighted square loss (Ribeiro et al., 2016) scored out of sample (Hastie et al., 2009, ch. 7). Neighbourhood squared error is standard (Plumb et al., 2018). |
+| Held-out metrics | Kernel-weighted R² and RMSE | Literature | LIME's own locality-weighted square loss (Ribeiro et al., 2016) scored out of sample (Hastie et al., 2009, ch. 7). Neighbourhood squared error is standard (Plumb et al., 2018). RMSE is absolute error: on the held-out set RMSE = output SD × √(1 − R²) exactly, so it is reported with `target_sd_mean` and read alongside R² (fix 21). |
 | Flat-output threshold | Kernel-weighted SD of the model's probability < 0.01 | Judgement | One percentage point. Below this, R² is unstable (Kvålseth, 1985), so R² is dropped and RMSE kept. Check that results hold at 0.005 and 0.02. |
 | Stability metric | Top-5 Jaccard (intersection over union) | Literature + judgement | Set overlap of the most important features is a common stability measure (Nogueira et al., 2018, discuss its properties). Top-5 of 10 reported features focuses on the features a user would read first. Spearman was dropped on 20-10-2026 because its chance level differs across models. |
 | References | 2 per case × d × model, N = 50,000, seeds separate from repeats | Judgement | 5× the largest budget, feasible in runtime (~4 s each at d = 500 on the Mac, estimated). Two references give a measure of the reference's own noise. |
@@ -100,6 +101,7 @@ Each decision is marked as one of:
 |---|---|---|---|
 | Unit of analysis | The explained case; repeats averaged within case first | Literature | Avoids treating dependent measurements as independent (Hurlbert, 1984). |
 | Confidence intervals | Class-stratified case bootstrap, 2,000 resamples, 95% percentile | Literature | Stratifying keeps classes balanced (Davison & Hinkley, 1997); ≥ 1,000 resamples for percentile intervals (Efron & Tibshirani, 1993). The same resamples are used for every setting and model (paired). |
+| Participant-clustered intervals | Bootstrap over the 9 participants (whole clusters, 2,000 resamples, same seed), reported as `_cluster` columns next to every case-level interval | Literature | Resampling the top level keeps correlated cases together (Davison & Hinkley, 1997, §3.8; Field & Welsh, 2007). Not the main test, because with 9 participants the smallest sign-flip p-value (2/512) is above Holm's first threshold (0.05/36). Approximate with so few clusters (Cameron, Gelbach & Miller, 2008). See fix 20. |
 | Model comparisons | Per-case differences; sign-flip permutation test (exact or 10,000 flips) | Literature | Valid for paired designs without assuming normality (Good, 2005); p never zero (Phipson & Smyth, 2010). |
 | Multiple comparisons | Holm at α = 0.05 within a pre-specified primary family; Holm over all as secondary | Literature | Holm (1979); pre-specified primary family (Bender & Lange, 2001). |
 | Primary family | Model pairs × d at N = 5,000, for runtime, held-out RMSE and reference Jaccard (≤ 36 tests) | Judgement | One cost metric and two quality metrics that stay valid when outputs are flat. Fixed in `config.py` before results. Reference comparisons drop out where a reference fails its rule. |
@@ -114,7 +116,7 @@ Each decision is marked as one of:
 | Warm-up | One untimed explanation per model × d before timing | Literature | Excludes first-call overhead (Georges et al., 2007). |
 | Timed region | `explain_instance()` only: sampling, model calls, distances, surrogate fit. Excludes training, explainer construction and quality scoring | Judgement | Measures the per-explanation cost a user pays. Not split by stage (stated limitation). |
 | Garbage collection | Disabled inside each timed call, collected every 100 calls outside timing | Literature | Collection pauses are timing noise (Georges et al., 2007). |
-| Drift monitoring | 11 speed probes through the timed phase (`machine_drift.csv`) | Judgement | Shows whether the machine changed speed during the run. |
+| Drift monitoring | 3 unrecorded warm-up probes, then 11 speed probes through the timed phase (`machine_drift.csv`, relative to the first and to the median) | Literature + judgement | Shows whether the machine changed speed during the run. Warm-up before measuring follows benchmarking practice (Georges et al., 2007; Kalibera & Jones, 2013); without it the first probe was partly a cold start. The rerun still showed real drift of up to about 50% within a run, so do the full run on a quiet machine on mains power. The median baseline can't be moved by one odd probe. See fix 22. |
 | Environment | `requirements-pinned.txt` (Python 3.13); full runs stop on any mismatch | Judgement | Library versions change numerics and speed, so results are only reproducible in the pinned environment. |
 | Cross-variant check | Model fingerprints and explained cases must match across variants | Literature | Paired comparisons need the same units and treatments (Montgomery, 2017). |
 
@@ -122,6 +124,8 @@ Each decision is marked as one of:
 
 - One dataset (UCI HAR).
 - 30 cases: bootstrap intervals are still somewhat too narrow (factor 0.80 on the variance).
+- The 30 cases come from 9 participants. Case-level tests are conditional on them; the participant-clustered intervals are a check and are themselves approximate with 9 clusters.
+- RMSE is bounded by each model's local output spread, so RMSE levels are not comparable across models on their own.
 - LIME perturbs each feature independently, so perturbed rows get less realistic as d grows (HAR's features are strongly correlated).
 - Features outside the subset are fixed at the case's values, so each d explains a slightly different function.
 - Ranked subsets are redundant, which can lower stability independently of d.

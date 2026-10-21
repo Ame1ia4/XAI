@@ -5,6 +5,10 @@ case share that case, so they are averaged within the case first; uncertainty th
 comes from a class-stratified bootstrap over cases. Every model explains the same
 cases (and the same class of each case), so model differences are paired by case:
 they use the same bootstrap resamples and a sign-flip permutation test.
+
+Cases come from only 9 test participants, and cases from one participant may be
+correlated. Tests stay at case level (conditional on these participants); the
+"_cluster" intervals resample participants instead and are the conservative check.
 """
 
 from __future__ import annotations
@@ -24,7 +28,7 @@ JACCARD = f"top{config.TOP_K}_jaccard"
 METRICS = {
     "runtime_seconds": "Runtime per explanation (s)",
     "fidelity_heldout": "Held-out surrogate fit (weighted R², flat cases excluded)",
-    "heldout_rmse": "Held-out surrogate error (weighted RMSE, probability units)",
+    "heldout_rmse": "Held-out surrogate error (weighted RMSE, absolute, probability units)",
     "fidelity_insample": "In-sample surrogate fit (LIME score)",
     "reference_jaccard": f"Top-{config.TOP_K} Jaccard vs large-N reference",
     "reference_ceiling": f"Top-{config.TOP_K} Jaccard between the two references",
@@ -39,6 +43,7 @@ PAIRED_METRICS = [m for m in METRICS if m not in PER_FEATURE_COUNT_METRICS]
 def case_level(raw: pd.DataFrame, stability: pd.DataFrame) -> pd.DataFrame:
     """One row per model x feature count x budget x case, every metric averaged in-case."""
     per_run = raw.groupby(CASE_COLUMNS, as_index=False).agg(
+        subject=("subject", "first"),
         true_class=("true_class", "first"),
         correct=("correct", "first"),
         runtime_seconds=("runtime_seconds", "mean"),
@@ -58,8 +63,8 @@ def case_level(raw: pd.DataFrame, stability: pd.DataFrame) -> pd.DataFrame:
     cases = per_run.merge(per_pair, on=CASE_COLUMNS, validate="one_to_one")
     if len(cases) != len(per_run):
         raise AssertionError("Stability rows do not cover every case")
-    cases["underdetermined"] = [
-        config.underdetermined(n, d) for n, d in zip(cases["num_samples"], cases["feature_count"])
+    cases["low_sample_ratio"] = [
+        config.low_sample_ratio(n, d) for n, d in zip(cases["num_samples"], cases["feature_count"])
     ]
     return cases
 
@@ -83,6 +88,29 @@ def bootstrap_indices(case_classes: pd.Series) -> np.ndarray:
             for positions in strata
         ]
     )
+
+
+def cluster_weights(cases: pd.DataFrame) -> np.ndarray:
+    """(resamples x cases) weights from a bootstrap over participants, in case_index order.
+
+    Participants are drawn with replacement; each case's weight is how many times its
+    participant was drawn. Not class-stratified, because participants span classes.
+    With only 9 participants this interval is itself approximate (few clusters).
+    """
+    subjects = cases.groupby("case_index")["subject"].first().sort_index().to_numpy()
+    labels, position = np.unique(subjects, return_inverse=True)
+    rng = np.random.default_rng(config.BOOTSTRAP_SEED)
+    draws = rng.integers(0, len(labels), size=(config.BOOTSTRAP_RESAMPLES, len(labels)))
+    counts = np.zeros((config.BOOTSTRAP_RESAMPLES, len(labels)))
+    np.add.at(counts, (np.arange(config.BOOTSTRAP_RESAMPLES)[:, None], draws), 1)
+    return counts[:, position]
+
+
+def _cluster_ci(values: np.ndarray, weights: np.ndarray) -> tuple[float, float]:
+    finite = np.isfinite(values)
+    with np.errstate(all="ignore"):
+        means = (weights @ np.where(finite, values, 0.0)) / (weights @ finite)
+    return _percentiles(means)
 
 
 def _percentiles(boot: np.ndarray) -> tuple[float, float]:
@@ -152,21 +180,32 @@ def primary_budget(budgets) -> int:
 
 # --- Summaries ------------------------------------------------------------
 def summarise(cases: pd.DataFrame) -> pd.DataFrame:
-    """Mean and bootstrap CI of every metric per model x feature count x budget."""
+    """Mean and bootstrap CIs of every metric per model x feature count x budget.
+
+    `_ci_*`: class-stratified case bootstrap. `_ci_*_cluster`: participant bootstrap.
+    `target_sd_mean` is the model's local output spread, the scale RMSE should be read on.
+    """
     case_classes = _case_classes(cases)
     indices = bootstrap_indices(case_classes)
+    weights = cluster_weights(cases)
     rows = []
     for keys, group in cases.groupby(GROUP_COLUMNS, sort=True):
         group = group.set_index("case_index").reindex(case_classes.index)
         row = dict(zip(GROUP_COLUMNS, keys))
         row["cases"] = int(group["runtime_seconds"].notna().sum())
-        row["underdetermined"] = config.underdetermined(row["num_samples"], row["feature_count"])
+        row["participants"] = int(group["subject"].nunique())
+        row["low_sample_ratio"] = config.low_sample_ratio(row["num_samples"], row["feature_count"])
         row["correct_case_fraction"] = float(group["correct"].astype(float).mean())
         row["flat_cases"] = int(group["flat_output"].astype(bool).sum())
+        row["target_sd_mean"] = float(group["target_sd"].mean())
         for metric in METRICS:
             values = group[metric].to_numpy(dtype=float)
             row[f"{metric}_mean"] = float(np.nanmean(values)) if np.isfinite(values).any() else np.nan
             row[f"{metric}_ci_low"], row[f"{metric}_ci_high"] = _ci(values, indices)
+            (
+                row[f"{metric}_ci_low_cluster"],
+                row[f"{metric}_ci_high_cluster"],
+            ) = _cluster_ci(values, weights)
         # Agreement relative to how well two references agree with each other (ratio of means).
         reference = group["reference_jaccard"].to_numpy(dtype=float)
         ceiling = group["reference_ceiling"].to_numpy(dtype=float)
@@ -189,9 +228,11 @@ def paired_differences(cases: pd.DataFrame) -> pd.DataFrame:
     pre-specified primary family; `p_holm_all` is Holm over the whole table.
     Reference-Jaccard comparisons leave the primary family where either model's
     references fail the pre-specified agreement rule (config.REFERENCE_MIN_AGREEMENT).
+    p-values are case level; `ci_low_cluster`/`ci_high_cluster` resample participants.
     """
     case_classes = _case_classes(cases)
     indices = bootstrap_indices(case_classes)
+    weights = cluster_weights(cases)
     models = [m for m in config.MODEL_NAMES if m in set(cases["model"])]
     budget = primary_budget(cases["num_samples"])
     valid = reference_validity(cases)
@@ -208,6 +249,7 @@ def paired_differences(cases: pd.DataFrame) -> pd.DataFrame:
             for metric in PAIRED_METRICS:
                 diff = (block[(metric, first)] - block[(metric, second)]).to_numpy(dtype=float)
                 low, high = _ci(diff, indices)
+                cluster_low, cluster_high = _cluster_ci(diff, weights)
                 references_ok = (
                     valid[(first, feature_count)] and valid[(second, feature_count)]
                     if metric == "reference_jaccard"
@@ -217,7 +259,7 @@ def paired_differences(cases: pd.DataFrame) -> pd.DataFrame:
                     {
                         "feature_count": feature_count,
                         "num_samples": num_samples,
-                        "underdetermined": config.underdetermined(num_samples, feature_count),
+                        "low_sample_ratio": config.low_sample_ratio(num_samples, feature_count),
                         "metric": metric,
                         "model_a": first,
                         "model_b": second,
@@ -225,12 +267,14 @@ def paired_differences(cases: pd.DataFrame) -> pd.DataFrame:
                         "mean_difference": float(np.nanmean(diff)) if np.isfinite(diff).any() else np.nan,
                         "ci_low": low,
                         "ci_high": high,
+                        "ci_low_cluster": cluster_low,
+                        "ci_high_cluster": cluster_high,
                         "p_value": sign_flip_p(diff),
                         "reference_valid": references_ok,
                         "primary": bool(
                             num_samples == budget
                             and metric in config.PRIMARY_METRICS
-                            and not config.underdetermined(num_samples, feature_count)
+                            and not config.low_sample_ratio(num_samples, feature_count)
                             and references_ok is not False
                         ),
                     }

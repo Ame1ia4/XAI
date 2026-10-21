@@ -61,10 +61,13 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    for variant in args.variants:
-        if not args.plots_only:
+    # Run every variant before plotting any: plotting checks that all variants on disk
+    # explain the same cases, so stale results from another variant would stop the run.
+    if not args.plots_only:
+        for variant in args.variants:
             run_models(args.models, args.quick, variant, args.allow_version_mismatch)
-        if not args.skip_plots:
+    if not args.skip_plots:
+        for variant in args.variants:
             plot_results.main(quick=args.quick, variant_name=variant)
 
 
