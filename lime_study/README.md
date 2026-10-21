@@ -41,6 +41,7 @@ Full runs stop at once if the installed packages or Python version differ from `
 - `results/<Model>_performance.json`: held-out accuracy, balanced accuracy and macro P/R/F1.
 - `results/<Model>_run_meta.json`: `run_id` (shared by all models in one run), the version check, a model fingerprint (hash of test-set probabilities), the explained cases, machine, package versions, thread settings, full config, model parameters, timings and the speed-probe trace.
 - `figures/lime_scaling_grid.{png,pdf}`: runtime, held-out R² (flat cases excluded) and held-out RMSE against budget, one column per feature count, with bootstrap CI bands. N ≤ d settings are hollow markers outside the lines. All axes are linear.
+- `figures/lime_overview.{png,pdf}`: the headline figure, with one row each for runtime, fidelity (held-out R²) and stability (top-5 Jaccard between repeats) against budget, and one column per feature count.
 - `figures/lime_stability_grid.{png,pdf}`: reference Jaccard (dashed line = reference ceiling), reference Jaccard relative to the ceiling, and repeat Jaccard.
 - `figures/cost_vs_quality.{png,pdf}`: reference Jaccard against runtime.
 - `figures/paired_differences.csv`: model A − model B per metric, feature count and budget, computed case by case, with bootstrap CIs, sign-flip p-values, `p_holm_primary` (pre-specified primary family) and `p_holm_all` (whole table).

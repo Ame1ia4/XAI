@@ -123,12 +123,14 @@ def _by_model(data: pd.DataFrame):
             yield model, group
 
 
-def _yerr(data: pd.DataFrame, metric: str) -> list[pd.Series]:
+def _yerr(data: pd.DataFrame, metric: str) -> list:
     mean = data[f"{metric}_mean"]
     # Clip float noise when the CI collapses onto the mean (e.g. one case per class).
+    # Plain arrays: matplotlib calls float() on one-element Series (the single N <= d
+    # point), which pandas deprecates.
     return [
-        (mean - data[f"{metric}_ci_low"]).clip(lower=0),
-        (data[f"{metric}_ci_high"] - mean).clip(lower=0),
+        (mean - data[f"{metric}_ci_low"]).clip(lower=0).to_numpy(),
+        (data[f"{metric}_ci_high"] - mean).clip(lower=0).to_numpy(),
     ]
 
 
@@ -188,6 +190,13 @@ STABILITY_ROWS = (
     ("repeat_jaccard", f"Top-{config.TOP_K} Jaccard\nbetween repeats"),
 )
 
+# One figure answering the three headline questions at a glance: cost, fidelity, stability.
+OVERVIEW_ROWS = (
+    ("runtime_seconds", "Runtime per\nexplanation (s)"),
+    ("fidelity_heldout", "Fidelity: held-out\nfit (weighted R²)"),
+    ("repeat_jaccard", f"Stability: top-{config.TOP_K}\nJaccard between repeats"),
+)
+
 
 def _plot_ceiling(ax, data: pd.DataFrame) -> None:
     """How well the two large-N references agree (constant across budgets).
@@ -226,17 +235,19 @@ def plot_grid(summary: pd.DataFrame, sweep: config.Sweep, out_dir, rows, name: s
                 ax.set_title(f"{feature_count} perturbed features")
             if col == 0:
                 ax.set_ylabel(label)
-            if row == len(rows) - 1:
-                ax.set_xlabel("LIME samples (num_samples)")
     if rows[0][0] == "runtime_seconds":
         axes[0, 0].set_ylim(bottom=0)
     handles, labels = axes[0, 0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=len(labels), bbox_to_anchor=(0.5, 1.02))
     fig.tight_layout(rect=(0, 0.03, 1, 0.97))
+    # One shared x label: with four columns a label under each panel runs into its neighbour.
+    # The footnote hangs below it (va="top"), so wrapped lines grow downwards, not into it.
+    fig.text(0.5, 0.025, "LIME samples (num_samples)", ha="center", va="top")
     fig.text(
         0.5,
-        0.0,
-        f"Bands: {config.CI_LEVEL:.0%} class-stratified bootstrap CI over explained cases. "
+        -0.005,
+        va="top",
+        s=f"Bands: {config.CI_LEVEL:.0%} class-stratified bootstrap CI over explained cases. "
         f"Hollow markers: N ≤ d (low sample-to-feature ratio), kept out of the lines. {note}",
         ha="center",
         color=TEXT_SECONDARY,
@@ -273,22 +284,22 @@ def plot_cost_vs_quality(summary: pd.DataFrame, out_dir) -> None:
                 color=style["color"],
             )
         ax.set_title(f"{feature_count} perturbed features")
-        ax.set_xlabel("Mean runtime per explanation (s)")
     # Shared axis: set the range once from all panels so no panel's data is clipped.
     axes[0].set_xlim(0, summary["runtime_seconds_mean"].max() * 1.05)
     axes[0].set_ylim(0, 1)
     axes[0].set_ylabel(f"Top-{config.TOP_K} Jaccard vs\nlarge-N reference")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=len(labels), bbox_to_anchor=(0.5, 1.08))
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    fig.text(0.5, 0.0, "Mean runtime per explanation (s)", ha="center")
     fig.text(
         0.5,
-        -0.04,
+        -0.08,
         "Points along each line are sample budgets, increasing left to right. "
         "Error bars: bootstrap CI over cases; hollow markers: N ≤ d.",
         ha="center",
         color=TEXT_SECONDARY,
     )
-    fig.tight_layout()
     _save(fig, out_dir, "cost_vs_quality")
 
 
@@ -342,6 +353,11 @@ def main(quick: bool = False, variant_name: str = config.MAIN_VARIANT.name) -> N
         summary, sweep, out_dir, STABILITY_ROWS, "lime_stability_grid",
         "Dashed: agreement between the two large-N references (ceiling); dotted: below the "
         f"pre-set {config.REFERENCE_MIN_AGREEMENT:.3f} rule (grey line), so not a valid reference.",
+    )
+    plot_grid(
+        summary, sweep, out_dir, OVERVIEW_ROWS, "lime_overview",
+        f"R² omits flat cases (output SD < {config.FLAT_OUTPUT_SD}). Details in "
+        "lime_scaling_grid (adds RMSE) and lime_stability_grid (adds the large-N references).",
     )
     plot_cost_vs_quality(summary, out_dir)
     print(f"Figures and tables written to {out_dir}")

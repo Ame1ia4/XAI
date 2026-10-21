@@ -1,6 +1,11 @@
 {
-  "model": "RandomForest",
-  "timestamp_utc": "2026-10-20T21:14:00.258774+00:00",
+  "run_id": "eb8bc38162414389ad207f8333697b69",
+  "models_in_run": [
+    "XGBoost",
+    "LogisticRegression",
+    "RandomForest"
+  ],
+  "timestamp_utc": "2026-10-21T16:44:38.119924+00:00",
   "python": "3.13.7 (v3.13.7:bcee1c32211, Aug 14 2025, 19:10:51) [Clang 16.0.0 (clang-1600.0.26.6)]",
   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "machine": "arm64",
@@ -14,6 +19,30 @@
     "scikit-learn": "1.7.2",
     "xgboost": "3.2.0",
     "matplotlib": "3.10.9"
+  },
+  "version_check": {
+    "pinned": {
+      "lime": "0.2.0.1",
+      "certifi": "2026.7.22",
+      "numpy": "2.2.6",
+      "pandas": "2.3.3",
+      "scipy": "1.15.3",
+      "scikit-learn": "1.7.2",
+      "xgboost": "3.2.0",
+      "matplotlib": "3.10.9"
+    },
+    "installed": {
+      "lime": "0.2.0.1",
+      "certifi": "2026.7.22",
+      "numpy": "2.2.6",
+      "pandas": "2.3.3",
+      "scipy": "1.15.3",
+      "scikit-learn": "1.7.2",
+      "xgboost": "3.2.0",
+      "matplotlib": "3.10.9"
+    },
+    "mismatches": [],
+    "strict": true
   },
   "thread_env": {
     "OMP_NUM_THREADS": "1",
@@ -37,13 +66,14 @@
       "LAYING"
     ],
     "feature_counts": [
+      50,
       100,
       300,
       500
     ],
     "sweep": {
       "name": "full",
-      "explanations_per_class": 3,
+      "explanations_per_class": 5,
       "sample_budgets": [
         500,
         1000,
@@ -51,10 +81,41 @@
         5000,
         10000
       ],
-      "repeats": 5
+      "repeats": 5,
+      "reference_samples": 50000
+    },
+    "variant": {
+      "name": "main",
+      "subset": "random",
+      "kernel_width": null,
+      "description": "Random nested subsets, LIME default kernel width"
     },
     "num_features": 10,
     "top_k": 5,
+    "holdout_samples": 5000,
+    "holdout_seed": 10042,
+    "reference_seeds": [
+      20042,
+      20043
+    ],
+    "reference_min_agreement": 0.6666666666666666,
+    "bootstrap_resamples": 2000,
+    "bootstrap_seed": 42,
+    "ci_level": 0.95,
+    "run_order_seed": 42,
+    "speed_probes": 10,
+    "speed_probe_warmups": 3,
+    "max_cases_per_subject": 4,
+    "flat_output_sd": 0.01,
+    "permutation_resamples": 10000,
+    "permutation_seed": 42,
+    "alpha": 0.05,
+    "primary_budget": 5000,
+    "primary_metrics": [
+      "runtime_seconds",
+      "heldout_rmse",
+      "reference_jaccard"
+    ],
     "lime_explainer_kwargs": {
       "mode": "classification",
       "kernel_width": null,
@@ -68,27 +129,6 @@
     "lime_distance_metric": "euclidean",
     "ridge_alpha": 1.0,
     "n_jobs": 1
-  },
-  "model_params": {
-    "bootstrap": true,
-    "ccp_alpha": 0.0,
-    "class_weight": null,
-    "criterion": "gini",
-    "max_depth": null,
-    "max_features": "sqrt",
-    "max_leaf_nodes": null,
-    "max_samples": null,
-    "min_impurity_decrease": 0.0,
-    "min_samples_leaf": 1,
-    "min_samples_split": 2,
-    "min_weight_fraction_leaf": 0.0,
-    "monotonic_cst": null,
-    "n_estimators": 100,
-    "n_jobs": 1,
-    "oob_score": false,
-    "random_state": 42,
-    "verbose": 0,
-    "warm_start": false
   },
   "data": {
     "data_url": "https://archive.ics.uci.edu/static/public/240/human+activity+recognition+using+smartphones.zip",
@@ -137,6 +177,107 @@
     2947,
     561
   ],
-  "fit_seconds": 8.236363124975469,
-  "benchmark_seconds": 435.2716016659979
+  "benchmark_seconds": 4123.4979519160115,
+  "speed_probes": [
+    {
+      "run_position": 0,
+      "seconds": 0.023999124998226762
+    },
+    {
+      "run_position": 900,
+      "seconds": 0.024128833028953522
+    },
+    {
+      "run_position": 1800,
+      "seconds": 0.023936791985761374
+    },
+    {
+      "run_position": 2700,
+      "seconds": 0.02399954100837931
+    },
+    {
+      "run_position": 3600,
+      "seconds": 0.025029250013176352
+    },
+    {
+      "run_position": 4500,
+      "seconds": 0.024553249997552484
+    },
+    {
+      "run_position": 5400,
+      "seconds": 0.024408040975686163
+    },
+    {
+      "run_position": 6300,
+      "seconds": 0.024068832979537547
+    },
+    {
+      "run_position": 7200,
+      "seconds": 0.026622541015967727
+    },
+    {
+      "run_position": 8100,
+      "seconds": 0.02398225001525134
+    },
+    {
+      "run_position": 9000,
+      "seconds": 0.024103958043269813
+    }
+  ],
+  "model": "RandomForest",
+  "model_params": {
+    "bootstrap": true,
+    "ccp_alpha": 0.0,
+    "class_weight": null,
+    "criterion": "gini",
+    "max_depth": null,
+    "max_features": "sqrt",
+    "max_leaf_nodes": null,
+    "max_samples": null,
+    "min_impurity_decrease": 0.0,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "min_weight_fraction_leaf": 0.0,
+    "monotonic_cst": null,
+    "n_estimators": 100,
+    "n_jobs": 1,
+    "oob_score": false,
+    "random_state": 42,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "model_fingerprint": "6d62cb17dd010a48a4337a74e2a6cb9edba8aee0f38a7c024c32c951408c6115",
+  "explained_cases": [
+    7510,
+    7589,
+    7614,
+    7846,
+    7934,
+    7955,
+    7969,
+    8035,
+    8058,
+    8157,
+    8346,
+    8450,
+    8452,
+    8566,
+    8594,
+    8622,
+    8679,
+    8879,
+    9000,
+    9104,
+    9270,
+    9325,
+    9452,
+    9738,
+    9742,
+    9891,
+    9925,
+    9932,
+    10094,
+    10226
+  ],
+  "fit_seconds": 8.190529666957445
 }

@@ -1,24 +1,24 @@
 {
-  "run_id": "22c61743dc2a4ff29af0c64621cee25f",
+  "run_id": "1d199058fa4f4208a707c0356133fd63",
   "models_in_run": [
     "XGBoost",
     "LogisticRegression",
     "RandomForest"
   ],
-  "timestamp_utc": "2026-10-21T11:27:19.060307+00:00",
-  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
-  "platform": "Windows-10-10.0.26200-SP0",
-  "machine": "AMD64",
-  "processor": "ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc",
+  "timestamp_utc": "2026-10-21T15:29:49.028629+00:00",
+  "python": "3.13.7 (v3.13.7:bcee1c32211, Aug 14 2025, 19:10:51) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "processor": "arm",
   "cpu_count": 8,
   "packages": {
     "lime": "0.2.0.1",
-    "numpy": "2.4.6",
-    "pandas": "3.0.6",
-    "scipy": "1.17.1",
-    "scikit-learn": "1.9.1",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "scipy": "1.15.3",
+    "scikit-learn": "1.7.2",
     "xgboost": "3.2.0",
-    "matplotlib": "3.11.2"
+    "matplotlib": "3.10.9"
   },
   "version_check": {
     "pinned": {
@@ -34,21 +34,14 @@
     "installed": {
       "lime": "0.2.0.1",
       "certifi": "2026.7.22",
-      "numpy": "2.4.6",
-      "pandas": "3.0.6",
-      "scipy": "1.17.1",
-      "scikit-learn": "1.9.1",
+      "numpy": "2.2.6",
+      "pandas": "2.3.3",
+      "scipy": "1.15.3",
+      "scikit-learn": "1.7.2",
       "xgboost": "3.2.0",
-      "matplotlib": "3.11.2"
+      "matplotlib": "3.10.9"
     },
-    "mismatches": [
-      "numpy: installed 2.4.6, pinned 2.2.6",
-      "pandas: installed 3.0.6, pinned 2.3.3",
-      "scipy: installed 1.17.1, pinned 1.15.3",
-      "scikit-learn: installed 1.9.1, pinned 1.7.2",
-      "matplotlib: installed 3.11.2, pinned 3.10.9",
-      "python: running 3.11, pinned 3.13"
-    ],
+    "mismatches": [],
     "strict": false
   },
   "thread_env": {
@@ -108,6 +101,8 @@
     "ci_level": 0.95,
     "run_order_seed": 42,
     "speed_probes": 10,
+    "speed_probe_warmups": 3,
+    "max_cases_per_subject": 4,
     "flat_output_sd": 0.01,
     "permutation_resamples": 10000,
     "permutation_seed": 42,
@@ -179,55 +174,55 @@
     2947,
     561
   ],
-  "benchmark_seconds": 399.8155897000106,
+  "benchmark_seconds": 96.11872170801507,
   "speed_probes": [
     {
       "run_position": 0,
-      "seconds": 0.19061620000866242
+      "seconds": 0.024155291030183434
     },
     {
       "run_position": 28,
-      "seconds": 0.10037490000831895
+      "seconds": 0.024127541983034462
     },
     {
       "run_position": 56,
-      "seconds": 0.09746280001127161
+      "seconds": 0.024141665955539793
     },
     {
       "run_position": 84,
-      "seconds": 0.09651479998137802
+      "seconds": 0.02428945800056681
     },
     {
       "run_position": 112,
-      "seconds": 0.14022559998556972
+      "seconds": 0.024199125007726252
     },
     {
       "run_position": 140,
-      "seconds": 0.13600169998244382
+      "seconds": 0.024073375039733946
     },
     {
       "run_position": 168,
-      "seconds": 0.1400056999991648
+      "seconds": 0.024126875039655715
     },
     {
       "run_position": 196,
-      "seconds": 0.10861470000236295
+      "seconds": 0.02423974999692291
     },
     {
       "run_position": 224,
-      "seconds": 0.09755799997947179
+      "seconds": 0.02408216695766896
     },
     {
       "run_position": 252,
-      "seconds": 0.10273020001477562
+      "seconds": 0.02409791701938957
     },
     {
       "run_position": 280,
-      "seconds": 0.09881470000254922
+      "seconds": 0.02403454197337851
     },
     {
       "run_position": 288,
-      "seconds": 0.09683729999233037
+      "seconds": 0.024120083020534366
     }
   ],
   "model": "RandomForest",
@@ -252,14 +247,14 @@
     "verbose": 0,
     "warm_start": false
   },
-  "model_fingerprint": "76c315c2b8d58ecdf219cc0946b06cecd824b68eec5698c0e3ea281eeb8c8237",
+  "model_fingerprint": "6d62cb17dd010a48a4337a74e2a6cb9edba8aee0f38a7c024c32c951408c6115",
   "explained_cases": [
-    7476,
-    7866,
-    7889,
-    9536,
-    9943,
-    10040
+    7614,
+    7955,
+    8452,
+    8566,
+    9452,
+    10226
   ],
-  "fit_seconds": 18.999207999993814
+  "fit_seconds": 8.22890487499535
 }

@@ -48,7 +48,7 @@ Each decision is marked as one of:
 
 | Decision | Value | Type | Why |
 |---|---|---|---|
-| Feature counts | 50, 100, 300, 500 | Judgement + literature | 500 is TabFM's `max_num_features`, kept for comparability with the original plan. 50 adds a fourth point for estimating the runtime exponent in d (Goldsmith et al., 2007) and never has a low sample-to-feature ratio. 100 and 300 fill the range. |
+| Feature counts | 50, 100, 300, 500 | Judgement + literature | 500 is TabFM's `max_num_features`, kept for comparability with the original plan. 50 adds a fourth point for estimating the runtime exponent in d (Goldsmith et al., 2007) and never has a low sample-to-feature ratio. It is a deliberate low-dimensional baseline that shows where degradation starts; keep "high-dimensional" claims to 100–500 (see `log_entries/20-10-2026.md`). 100 and 300 fill the range. |
 | Subsets | Nested prefixes of one seeded random permutation (50 ⊂ 100 ⊂ 300 ⊂ 500) | Judgement | Nesting means a larger d only adds features, so changes with d aren't caused by swapping features out. The same subsets are used for every model. |
 | Features outside the subset | Held at the case's own values | Judgement | The model always sees all 561 features. Each d therefore explains a slightly different function (the model with other features fixed). State this in the paper. |
 | Sensitivity check: `ranked_subset` | Top-d features by ANOVA F against the training labels | Literature | A standard model-free filter (Guyon & Elisseeff, 2003). It checks whether trends come from random subsets holding little signal. Every model still gets the same subsets. |

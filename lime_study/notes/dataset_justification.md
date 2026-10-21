@@ -21,19 +21,23 @@ The paper is about LIME on *high-dimensional* tabular data. Covertype has only 5
 | Balanced classes for 3 explained cases per class | 6 classes; the largest is 18.9% and the smallest 13.7% |
 | Feasible for every model | 7,352 training rows, so every model trains on the full training set with no subsampling |
 | Recognised benchmark | One of the 72 datasets in OpenML-CC18 |
-| Compatible with TabFM later | The 100/300/500 perturbed-feature sweep stays within TabFM's `max_num_features=500` default |
+| Compatible with TabFM later | The 50/100/300/500 perturbed-feature sweep stays within TabFM's `max_num_features=500` default |
 
 **Why the split is 70/30 rather than our old 80/20.** It is HAR's own split, made by volunteer rather than by row. Windows recorded from the same person are highly correlated, so a random row split would put the same people in both train and test and inflate accuracy. Using the published split also keeps our accuracy figures comparable with the original paper (multiclass SVM, 96%). Covertype's 80/20 was only our own choice, because that dataset had no official split. The ratio is supported for high-dimensional classifiers: Dobbin & Simon (source 9) found that about 2/3 for training is close to optimal when n ≥ 100 and accuracy is 85% or higher, and HAR meets both conditions. Splitting by subject is supported by Saeb et al. (source 10), who show that record-wise splits often massively overestimate accuracy.
 
-**Why 100 / 300 / 500 perturbed features.** The models always see all 561 features. Only the number of features LIME perturbs changes, so model quality is held fixed while explanation dimensionality varies.
+**Why 50 / 100 / 300 / 500 perturbed features.** The models always see all 561 features. Only the number of features LIME perturbs changes, so model quality is held fixed while explanation dimensionality varies.
 
 - **500 (upper bound)** is TabFM's documented `max_num_features` (source 5). Above it, TabFM would subsample features while the other models wouldn't, breaking the controlled comparison.
-- **100 (lower bound)** keeps every condition in the "hundreds of features" regime the study is about.
-- **300** gives equal 200-feature steps. Three evenly spaced points are the minimum needed to tell a linear trend from a curving one.
+- **100, 300, 500** are the high-dimensional conditions: the "hundreds of features" regime the study is about, in equal 200-feature steps.
+- **50** is a deliberate low-dimensional baseline (added 21-10-2026, fix 13 in `claim_safe_fixes.md`), not a high-dimensional condition:
+  - a fourth d value gives 20 design points for the runtime power-law fit (Goldsmith et al., 2007);
+  - it shows quality degrading *from* a setting where LIME should work well;
+  - it never has a low sample-to-feature ratio (at least 10 samples per feature);
+  - it halves 100 and is still 5× the 10 reported features.
 
-Crossed with the 500–10,000 sample budgets, the grid spans sample-to-feature ratios from 1:1 to 100:1 for LIME's ridge surrogate. It also spans default kernel widths of 0.75·√d = 7.5, 13.0 and 16.8. Garreau & von Luxburg (source 6) show this kind of parameter choice affects which features LIME recovers.
+Crossed with the 500–10,000 sample budgets, the grid spans sample-to-feature ratios from 1:1 to 200:1 for LIME's ridge surrogate. It also spans default kernel widths of 0.75·√d = 5.3, 7.5, 13.0 and 16.8. Garreau & von Luxburg (source 6) show this kind of parameter choice affects which features LIME recovers.
 
-The subsets are nested (100 ⊂ 300 ⊂ 500) and seeded. No source prescribes these exact values. The ends are constrained as described above, and 300 is a design choice for even spacing.
+The subsets are nested (50 ⊂ 100 ⊂ 300 ⊂ 500) and seeded. No source prescribes these exact values. 500 is fixed by TabFM, the 100–500 range by the study's focus, and 50 by the reasons above. In the paper, keep "high-dimensional" claims to 100–500 and describe 50 as the baseline.
 
 ## Verified sources
 
