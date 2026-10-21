@@ -2,7 +2,7 @@
 
 This folder holds the controlled experiment for the paper *LIME Cost/Quality Scaling on High-Dimensional Tabular Data across multiple models*. It measures LIME **runtime**, **held-out fidelity and error** (the surrogate's kernel-weighted R² and RMSE on fresh perturbations it was not fitted on), **convergence** (top-5 Jaccard against two 50,000-sample reference explanations) and **stability** (top-5 Jaccard across repeated runs) for XGBoost, Logistic Regression and Random Forest on **UCI HAR** (561 features, 6 classes, official subject-based train/test split). The sweep covers 50, 100, 300 and 500 perturbed features, 500 to 10,000 LIME samples, and 30 explained test rows (5 per class). The dataset choice and its sources are in [`notes/dataset_justification.md`](notes/dataset_justification.md).
 
-The full methodology, the decisions behind it and the list of changes from the old notebooks are in [`notes/lime_study_rebuild_plan.md`](notes/lime_study_rebuild_plan.md). Only results from this folder should go into the paper. The notebooks in `experiments/` are kept for reference only.
+The full methodology, the decisions behind it and the list of changes from the old notebooks are in [`notes/lime_study_rebuild_plan.md`](notes/lime_study_rebuild_plan.md). Every design parameter and its rationale is in [`notes/design_decisions.md`](notes/design_decisions.md), and every fix made on the `claim-safe-fixes` branch, with sources, is in [`notes/claim_safe_fixes.md`](notes/claim_safe_fixes.md). Only results from this folder should go into the paper. The notebooks in `experiments/` are kept for reference only.
 
 ## Run
 
