@@ -1,0 +1,286 @@
+{
+  "run_id": "f31d93bbda754b6da9b1934c04788ac1",
+  "models_in_run": [
+    "XGBoost",
+    "LogisticRegression",
+    "RandomForest"
+  ],
+  "timestamp_utc": "2026-10-21T11:34:08.597337+00:00",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "machine": "AMD64",
+  "processor": "ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc",
+  "cpu_count": 8,
+  "packages": {
+    "lime": "0.2.0.1",
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "scipy": "1.17.1",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.2.0",
+    "matplotlib": "3.11.2"
+  },
+  "version_check": {
+    "pinned": {
+      "lime": "0.2.0.1",
+      "certifi": "2026.7.22",
+      "numpy": "2.2.6",
+      "pandas": "2.3.3",
+      "scipy": "1.15.3",
+      "scikit-learn": "1.7.2",
+      "xgboost": "3.2.0",
+      "matplotlib": "3.10.9"
+    },
+    "installed": {
+      "lime": "0.2.0.1",
+      "certifi": "2026.7.22",
+      "numpy": "2.4.6",
+      "pandas": "3.0.6",
+      "scipy": "1.17.1",
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.2.0",
+      "matplotlib": "3.11.2"
+    },
+    "mismatches": [
+      "numpy: installed 2.4.6, pinned 2.2.6",
+      "pandas: installed 3.0.6, pinned 2.3.3",
+      "scipy: installed 1.17.1, pinned 1.15.3",
+      "scikit-learn: installed 1.9.1, pinned 1.7.2",
+      "matplotlib: installed 3.11.2, pinned 3.10.9",
+      "python: running 3.11, pinned 3.13"
+    ],
+    "strict": false
+  },
+  "thread_env": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  },
+  "config": {
+    "dataset": "uci_har",
+    "data_url": "https://archive.ics.uci.edu/static/public/240/human+activity+recognition+using+smartphones.zip",
+    "data_doi": "10.24432/C54S4K",
+    "random_state": 42,
+    "background_size": 2000,
+    "class_names": [
+      "WALKING",
+      "WALKING_UPSTAIRS",
+      "WALKING_DOWNSTAIRS",
+      "SITTING",
+      "STANDING",
+      "LAYING"
+    ],
+    "feature_counts": [
+      50,
+      100,
+      300,
+      500
+    ],
+    "sweep": {
+      "name": "quick",
+      "explanations_per_class": 1,
+      "sample_budgets": [
+        500,
+        1000
+      ],
+      "repeats": 2,
+      "reference_samples": 5000
+    },
+    "variant": {
+      "name": "fixed_kernel",
+      "subset": "random",
+      "kernel_width": 12.99038105676658,
+      "description": "Kernel width fixed at 12.990 for every feature count"
+    },
+    "num_features": 10,
+    "top_k": 5,
+    "holdout_samples": 5000,
+    "holdout_seed": 10042,
+    "reference_seeds": [
+      20042,
+      20043
+    ],
+    "reference_min_agreement": 0.6666666666666666,
+    "bootstrap_resamples": 2000,
+    "bootstrap_seed": 42,
+    "ci_level": 0.95,
+    "run_order_seed": 42,
+    "speed_probes": 10,
+    "flat_output_sd": 0.01,
+    "permutation_resamples": 10000,
+    "permutation_seed": 42,
+    "alpha": 0.05,
+    "primary_budget": 5000,
+    "primary_metrics": [
+      "runtime_seconds",
+      "heldout_rmse",
+      "reference_jaccard"
+    ],
+    "lime_explainer_kwargs": {
+      "mode": "classification",
+      "kernel_width": 12.99038105676658,
+      "kernel": null,
+      "discretize_continuous": true,
+      "discretizer": "quartile",
+      "feature_selection": "auto",
+      "sample_around_instance": false,
+      "verbose": false
+    },
+    "lime_distance_metric": "euclidean",
+    "ridge_alpha": 1.0,
+    "n_jobs": 1
+  },
+  "data": {
+    "data_url": "https://archive.ics.uci.edu/static/public/240/human+activity+recognition+using+smartphones.zip",
+    "data_doi": "10.24432/C54S4K",
+    "archive_sha256": "c00b803081a5c797cd5e4b83700a9810b38d53d9d84e01917e090e1fdbc81031",
+    "train_subjects": [
+      1,
+      3,
+      5,
+      6,
+      7,
+      8,
+      11,
+      14,
+      15,
+      16,
+      17,
+      19,
+      21,
+      22,
+      23,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "test_subjects": [
+      2,
+      4,
+      9,
+      10,
+      12,
+      13,
+      18,
+      20,
+      24
+    ]
+  },
+  "train_shape": [
+    7352,
+    561
+  ],
+  "test_shape": [
+    2947,
+    561
+  ],
+  "benchmark_seconds": 345.58016050001606,
+  "speed_probes": [
+    {
+      "run_position": 0,
+      "seconds": 0.14430390001507476
+    },
+    {
+      "run_position": 28,
+      "seconds": 0.13766279999981634
+    },
+    {
+      "run_position": 56,
+      "seconds": 0.09973019998869859
+    },
+    {
+      "run_position": 84,
+      "seconds": 0.10064789999159984
+    },
+    {
+      "run_position": 112,
+      "seconds": 0.09986210000352003
+    },
+    {
+      "run_position": 140,
+      "seconds": 0.09727309999288991
+    },
+    {
+      "run_position": 168,
+      "seconds": 0.09830730000976473
+    },
+    {
+      "run_position": 196,
+      "seconds": 0.10055870001087897
+    },
+    {
+      "run_position": 224,
+      "seconds": 0.09745530001237057
+    },
+    {
+      "run_position": 252,
+      "seconds": 0.09887480002362281
+    },
+    {
+      "run_position": 280,
+      "seconds": 0.09947139999712817
+    },
+    {
+      "run_position": 288,
+      "seconds": 0.10273390001384541
+    }
+  ],
+  "model": "XGBoost",
+  "model_params": {
+    "objective": "multi:softprob",
+    "base_score": null,
+    "booster": null,
+    "callbacks": null,
+    "colsample_bylevel": null,
+    "colsample_bynode": null,
+    "colsample_bytree": 0.9,
+    "device": null,
+    "early_stopping_rounds": null,
+    "enable_categorical": false,
+    "eval_metric": "mlogloss",
+    "feature_types": null,
+    "feature_weights": null,
+    "gamma": null,
+    "grow_policy": null,
+    "importance_type": null,
+    "interaction_constraints": null,
+    "learning_rate": 0.1,
+    "max_bin": null,
+    "max_cat_threshold": null,
+    "max_cat_to_onehot": null,
+    "max_delta_step": null,
+    "max_depth": 6,
+    "max_leaves": null,
+    "min_child_weight": null,
+    "missing": NaN,
+    "monotone_constraints": null,
+    "multi_strategy": null,
+    "n_estimators": 250,
+    "n_jobs": 1,
+    "num_parallel_tree": null,
+    "random_state": 42,
+    "reg_alpha": null,
+    "reg_lambda": null,
+    "sampling_method": null,
+    "scale_pos_weight": null,
+    "subsample": 0.9,
+    "tree_method": "hist",
+    "validate_parameters": null,
+    "verbosity": null
+  },
+  "model_fingerprint": "56d7a645f3c4604b39d108a161981668cbe71d8ab6f518a186ee015012d8bf54",
+  "explained_cases": [
+    7476,
+    7866,
+    7889,
+    9536,
+    9943,
+    10040
+  ],
+  "fit_seconds": 38.120557599992026
+}
