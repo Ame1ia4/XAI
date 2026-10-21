@@ -110,6 +110,7 @@ def drift_table(sweep: config.Sweep, variant: config.Variant) -> pd.DataFrame:
         if path.exists():
             table = pd.DataFrame(json.loads(path.read_text())["speed_probes"])
             table["relative_to_first"] = table["seconds"] / table["seconds"].iloc[0]
+            table["relative_to_median"] = table["seconds"] / table["seconds"].median()
             return table
     return pd.DataFrame()
 
@@ -134,8 +135,8 @@ def _yerr(data: pd.DataFrame, metric: str) -> list[pd.Series]:
 def _plot_metric(ax, data: pd.DataFrame, metric: str) -> None:
     for model, group in _by_model(data):
         style = MODEL_STYLE[model]
-        valid = group[~group["underdetermined"]]
-        flagged = group[group["underdetermined"]]
+        valid = group[~group["low_sample_ratio"]]
+        flagged = group[group["low_sample_ratio"]]
         ax.plot(valid["num_samples"], valid[f"{metric}_mean"], label=MODEL_LABELS[model], **style)
         ax.fill_between(
             valid["num_samples"],
@@ -179,7 +180,7 @@ def _save(fig, out_dir, name: str) -> None:
 COST_FIDELITY_ROWS = (
     ("runtime_seconds", "Runtime per\nexplanation (s)"),
     ("fidelity_heldout", "Held-out surrogate fit\n(weighted R², non-flat)"),
-    ("heldout_rmse", "Held-out surrogate error\n(weighted RMSE)"),
+    ("heldout_rmse", "Held-out surrogate error\n(weighted RMSE, absolute)"),
 )
 STABILITY_ROWS = (
     ("reference_jaccard", f"Top-{config.TOP_K} Jaccard vs\nlarge-N reference"),
@@ -236,7 +237,7 @@ def plot_grid(summary: pd.DataFrame, sweep: config.Sweep, out_dir, rows, name: s
         0.5,
         0.0,
         f"Bands: {config.CI_LEVEL:.0%} class-stratified bootstrap CI over explained cases. "
-        f"Hollow markers: N ≤ d, kept out of the lines. {note}",
+        f"Hollow markers: N ≤ d (low sample-to-feature ratio), kept out of the lines. {note}",
         ha="center",
         color=TEXT_SECONDARY,
         wrap=True,
@@ -252,8 +253,8 @@ def plot_cost_vs_quality(summary: pd.DataFrame, out_dir) -> None:
         subset = summary[summary["feature_count"] == feature_count]
         for model, group in _by_model(subset):
             style = MODEL_STYLE[model]
-            valid = group[~group["underdetermined"]]
-            flagged = group[group["underdetermined"]]
+            valid = group[~group["low_sample_ratio"]]
+            flagged = group[group["low_sample_ratio"]]
             ax.errorbar(
                 valid["runtime_seconds_mean"],
                 valid["reference_jaccard_mean"],

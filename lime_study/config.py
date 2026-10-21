@@ -50,7 +50,7 @@ CLASS_NAMES = (
     "LAYING",
 )
 # Nested LIME perturbation subsets. 50 adds a fourth design point for the runtime
-# exponent in d and is never underdetermined; 500 = TabFM max_num_features.
+# exponent in d and never has a low sample-to-feature ratio; 500 = TabFM max_num_features.
 FEATURE_COUNTS = (50, 100, 300, 500)
 
 
@@ -98,10 +98,13 @@ def case_seed(base: int, case_index: int) -> int:
 REFERENCE_MIN_AGREEMENT = 4 / 6
 
 
-def underdetermined(num_samples: int, feature_count: int) -> bool:
-    """N <= d: the surrogate's feature selection sees no more samples than features.
+def low_sample_ratio(num_samples: int, feature_count: int) -> bool:
+    """N <= d: a low sample-to-feature ratio.
 
-    These settings are reported separately and left out of trend lines.
+    LIME's feature selection fits a ridge regression over all d features from N samples,
+    so with N <= d the choice of features is mostly noise. Not strictly underdetermined,
+    because the ridge is regularised. These settings are reported separately and left
+    out of trend lines.
     """
     return num_samples <= feature_count
 
@@ -109,11 +112,17 @@ def underdetermined(num_samples: int, feature_count: int) -> bool:
 # "Flat" output: the model's probability for the explained class has a kernel-weighted
 # standard deviation below 1 percentage point over the held-out perturbations. R² is a
 # ratio to that variation, so it is not reported for flat cases; RMSE still is.
+# RMSE is absolute error in probability units: it is bounded by how much the model's
+# output moves locally (target_sd), so compare it across models alongside target_sd.
 FLAT_OUTPUT_SD = 0.01
 
 # --- Statistics and run order ----------------------------------------------
-# Uncertainty comes from a class-stratified bootstrap over explained cases, the
-# independent unit; repeats and repeat pairs are averaged within each case first.
+# UCI HAR test rows come from 9 participants, and rows from one participant may be
+# correlated. Case selection spreads cases across participants, at most this many each.
+MAX_CASES_PER_SUBJECT = 4
+# Uncertainty comes from a class-stratified bootstrap over explained cases, the unit of
+# the tests; repeats and repeat pairs are averaged within each case first. A second,
+# participant-clustered bootstrap gives the more conservative "_cluster" intervals.
 BOOTSTRAP_RESAMPLES = 2_000
 BOOTSTRAP_SEED = RANDOM_STATE
 CI_LEVEL = 0.95
@@ -131,6 +140,7 @@ PRIMARY_METRICS = ("runtime_seconds", "heldout_rmse", "reference_jaccard")
 # process; blocks in seeded random order; models in random order within each block).
 RUN_ORDER_SEED = RANDOM_STATE
 SPEED_PROBES = 10  # drift probes spread through the timed phase (plus one at the start)
+SPEED_PROBE_WARMUPS = 3  # unrecorded probe runs before the first one, so it is not a cold start
 
 # --- LIME settings (explicit, matching lime==0.2.0.1 defaults) ------------
 LIME_EXPLAINER_KWARGS: dict[str, Any] = {
@@ -272,6 +282,8 @@ def snapshot(sweep: Sweep, variant: Variant = MAIN_VARIANT) -> dict[str, Any]:
         "ci_level": CI_LEVEL,
         "run_order_seed": RUN_ORDER_SEED,
         "speed_probes": SPEED_PROBES,
+        "speed_probe_warmups": SPEED_PROBE_WARMUPS,
+        "max_cases_per_subject": MAX_CASES_PER_SUBJECT,
         "flat_output_sd": FLAT_OUTPUT_SD,
         "permutation_resamples": PERMUTATION_RESAMPLES,
         "permutation_seed": PERMUTATION_SEED,

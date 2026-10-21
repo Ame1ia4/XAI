@@ -87,8 +87,10 @@ def _unique_feature_names(names: list[str]) -> list[str]:
     return unique
 
 
-def load_har() -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, dict[str, Any]]:
-    """Return the official subject-based UCI HAR split plus provenance metadata.
+def load_har() -> tuple[
+    pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, pd.Series, dict[str, Any]
+]:
+    """Return the official subject-based UCI HAR split, test-row participants, and provenance.
 
     Train: 21 volunteers / 7,352 windows. Test: 9 other volunteers / 2,947 windows.
     Labels are shifted from 1..6 to 0..5 to match model class positions.
@@ -137,19 +139,39 @@ def load_har() -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, dict[s
         "train_subjects": sorted(int(s) for s in set(train_subjects)),
         "test_subjects": sorted(int(s) for s in set(test_subjects)),
     }
-    return X_train, X_test, y_train, y_test, provenance
+    subject_test = pd.Series(test_subjects, index=X_test.index, name="subject")
+    return X_train, X_test, y_train, y_test, subject_test, provenance
 
 
 def selected_explanation_cases(
     X_test: pd.DataFrame,
     y_test: pd.Series,
+    subjects: pd.Series,
     per_class: int,
 ) -> pd.DataFrame:
-    """Choose held-out rows per true class without conditioning on model predictions."""
-    # Sample on the label Series alone; adding a column to the 561-column frame fragments it.
-    labels = pd.Series(y_test.to_numpy(), index=X_test.index, name="activity")
-    chosen = labels.groupby(labels, sort=True).sample(n=per_class, random_state=config.RANDOM_STATE)
-    return X_test.loc[chosen.index.sort_values()]
+    """Choose held-out rows per true class, spread across participants, without model predictions.
+
+    Rows from one participant may be correlated, so picks go round the classes in turn,
+    and each pick is the row (in a seeded random order) whose participant has supplied
+    the fewest cases so far. No participant may supply more than MAX_CASES_PER_SUBJECT.
+    """
+    rng = np.random.default_rng(config.RANDOM_STATE)
+    labels = pd.Series(y_test.to_numpy(), index=X_test.index)
+    candidates = {
+        label: list(rng.permutation(rows.index.to_numpy()))
+        for label, rows in labels.groupby(labels, sort=True)
+    }
+    used: dict[int, int] = {}
+    chosen = []
+    for _ in range(per_class):
+        for label, rows in candidates.items():
+            pick = min(rows, key=lambda row: used.get(subjects.loc[row], 0))  # first in random order on ties
+            rows.remove(pick)
+            chosen.append(pick)
+            used[subjects.loc[pick]] = used.get(subjects.loc[pick], 0) + 1
+    if max(used.values()) > config.MAX_CASES_PER_SUBJECT:
+        raise AssertionError(f"A participant supplies {max(used.values())} cases; cap is {config.MAX_CASES_PER_SUBJECT}")
+    return X_test.loc[sorted(chosen)]
 
 
 def model_fingerprint(model: Any, X_test: pd.DataFrame) -> str:
@@ -304,6 +326,7 @@ def benchmark_lime(
     y_train: pd.Series,
     X_test: pd.DataFrame,
     y_test: pd.Series,
+    subject_test: pd.Series,
     sweep: config.Sweep,
     variant: config.Variant,
 ) -> tuple[dict[str, dict[str, pd.DataFrame]], list[dict[str, float]]]:
@@ -323,7 +346,7 @@ def benchmark_lime(
         n=min(config.BACKGROUND_SIZE, len(X_train)),
         random_state=config.RANDOM_STATE,
     )
-    cases = selected_explanation_cases(X_test, y_test, sweep.explanations_per_class)
+    cases = selected_explanation_cases(X_test, y_test, subject_test, sweep.explanations_per_class)
     ranking = feature_ranking(variant, X_train, y_train)
     lime_kwargs = config.lime_explainer_kwargs(variant)
 
@@ -333,6 +356,7 @@ def benchmark_lime(
         case_info[case_index] = {
             "data": row.to_numpy(),
             "true_class": true_class,
+            "subject": int(subject_test.loc[case_index]),
             "predicted_class": {
                 name: int(model.predict(X_test.loc[[case_index]])[0]) for name, model in models.items()
             },
@@ -431,6 +455,8 @@ def benchmark_lime(
         for m in rng.permutation(len(names))
     ]
     probe_every = max(1, len(schedule) // config.SPEED_PROBES)
+    for _ in range(config.SPEED_PROBE_WARMUPS):  # unrecorded, so the first probe is not a cold start
+        speed_probe()
     probes = [{"run_position": 0, "seconds": speed_probe()}]
     fits: dict[tuple[str, int, int, int, int], dict[str, Any]] = {}
     observations: dict[str, list[dict[str, Any]]] = {name: [] for name in names}
@@ -448,6 +474,7 @@ def benchmark_lime(
             {
                 "model": name,
                 "case_index": case_index,
+                "subject": info["subject"],
                 "true_class": info["true_class"],
                 "predicted_class": info["predicted_class"][name],
                 "correct": info["true_class"] == info["predicted_class"][name],
@@ -600,6 +627,9 @@ def validate(
     for label, (actual, wanted) in expected.items():
         if actual != wanted:
             raise AssertionError(f"Expected {wanted} {label}, got {actual}")
+    per_subject = raw.groupby("subject")["case_index"].nunique()
+    if per_subject.max() > config.MAX_CASES_PER_SUBJECT:
+        raise AssertionError(f"A participant supplies {per_subject.max()} cases; cap is {config.MAX_CASES_PER_SUBJECT}")
     if not (raw["explained_class"] == raw["true_class"]).all():
         raise AssertionError("Every model must explain the case's true class")
     if not (summary["cases"] == n_cases).all():
@@ -693,7 +723,7 @@ def run_experiment(
     run_id = uuid.uuid4().hex
     print(f"models={model_names} sweep={sweep.name} variant={variant.name} -> {out_dir}", flush=True)
 
-    X_train, X_test, y_train, y_test, provenance = load_har()
+    X_train, X_test, y_train, y_test, subject_test, provenance = load_har()
     models, fit_seconds, performance, fingerprints = {}, {}, {}, {}
     for name in model_names:
         model = config.MODEL_BUILDERS[name]()
@@ -706,7 +736,9 @@ def run_experiment(
         print(f"[{name}] fitted in {fit_seconds[name]:.1f}s; test metrics {performance[name]}", flush=True)
 
     benchmark_started = perf_counter()
-    tables, probes = benchmark_lime(models, X_train, y_train, X_test, y_test, sweep, variant)
+    tables, probes = benchmark_lime(
+        models, X_train, y_train, X_test, y_test, subject_test, sweep, variant
+    )
     benchmark_seconds = perf_counter() - benchmark_started
 
     shared_meta = {
