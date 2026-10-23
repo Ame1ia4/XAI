@@ -18,11 +18,11 @@ Our research investigates how LIME's computational cost and explanation quality 
 
 ## Links
 
-- [Latest Report Draft]()
+- [Latest Report Draft](research_paper_draft/)
 - [Research Journal](log_entries/)
-- [Research Papers](research_papers/)
+- [Research Papers](papers_researched/)
 - [Experimental Code and Results](lime_study/)
-- [Dataset Research](data_sources/)
+- [Dataset Research](dataset_sources/)
 - [AI Usage and Chat Logs](chat_logs/)
 - [Presentation](Presentation-LIME_CostQuality_Scaling_on_High_Dimensional_Tabular_Data_Across_Multiple_Models.pdf)
 
