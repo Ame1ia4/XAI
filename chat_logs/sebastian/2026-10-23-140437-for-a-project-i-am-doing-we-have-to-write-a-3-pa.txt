@@ -1,0 +1,3050 @@
+
+❯ for a project i am doing, we have to write a 3 page paper about something
+  explainable AI related. we decided to do it on "Explainable AI: LIME
+  Cost/Quality Scaling on High-Dimensional Tabular Data across multiple
+  different models ". so far we have:
+  Explainable AI: LIME Cost/Quality Scaling on High-Dimensional Tabular Data
+  across multiple different models
+
+  By Caitlin Amelia Moloney (24411086), David Moore (24419095), Hugh Murtagh
+  (24421448), Sebastian Kimmel (24420336)
+
+  Abstract
+
+  Introduction
+
+  LIME is a popularly used model-agnostic explainability method for black box
+  models. The runtime of LIME depends on the number of perturbation samples and
+  inference cost of the black-box model to which it is being applied, while
+  the quality of explanations degrades as feature space grows.
+
+  Studies have examined LIME's instability and proposed variations upon LIME,
+  but there is a lack of guidance on how cost and quality might scale together
+  as dimensionality and model complexity increase.
+
+  This paper's purpose is to investigate LIME cost/quality scaling across
+  multiple models on large tabular datasets, measuring runtime against
+  stability and fidelity to identify where additional computations stop
+  improving explanation quality.
+
+
+
+  Background/Related Work
+
+  2.0 Why haven’t LIME computational costs been studied?
+
+  Theme 1: LIME is expensive, but nobody has measured that systematically on
+  tabular data.
+
+  Theme 2: More samples make LIME more stable, but cost more. Only
+  qualitatively, or for one model.
+
+  Theme 3: Tabular LIME has been evaluated, but not for cost.
+
+
+
+  2.1 How to create an unbiased research-based experiment?
+
+  Sample sizes – justify each
+
+  Dataset
+
+  Models
+
+  18, 36, 54 – number of features we examine it at w
+
+  Controls – fixed seeds
+
+
+
+  Methodology
+
+  3.0 Study Design
+
+  This is a controlled computational experiment characterizing how LIME’s cost
+  and quality scale with the number of samples (N) and features (d) using a
+  factorial design (3 models x 4 values of d x 5 values of N x 5 repeats).
+
+  The three research questions this experiment aims to address are:
+
+  How does runtime scale with N and d per explanation?
+
+  How does quality change with N and d?
+
+  How does the black-box model change cost/quality trade-offs?
+
+  The unit of analysis is 30 explained instances – 5 instances per class,
+  controlled and evaluated via ranked subsets and a fixed kernel width at
+  0.75·√300 to prevent differences in computation per instance run.
+
+  3.1 Dataset & Preprocessing
+
+  The chosen dataset 'UCI HAR' consists of 561 continuous features, and 6
+  classes – selected for its high dimensionality and continuous features.
+
+          The dataset has a subject-based train/test of 70/30 , so that there
+  is no leakage between subjects.
+
+  Random state is set to 42
+
+  Subsets for 'd' are nested using a seeded random permutation.  LIME perturbs
+  only the d chosen features and the remianing instances rest at their original
+  values, so the model always receives all 561. Five explained instances are
+  chosen per true class from the test set.
+
+  Sample sizes have been split into 500, 1000, 2500, 5000, 10000. Random state
+  is set to 42, and a background sample of 2000 training rows is passed to
+  LIMETabularExplainer.
+
+  Each explanation reports on 10 features and LIME is re-run 5 times upon each
+  sample size with different explainer seeds, since Jaccard across seeds needs
+  several runs.
+
+  3.2 Models
+
+  The models chosen to experiment upon were Logistic Regression, Random Forest,
+  XGBoost, and TabFM.
+
+
+
+  Kernel width (default 0.75·√d), discretize_continuous=True with the quartile
+  discretiser, and the surrogate (Ridge, α=1). These are one line each and
+  essential for reproducibility.
+
+
+
+  3.3 LIME Configuration
+
+  Lime Version: 0.2.0.1
+
+  3.4 Evaluation Metrics
+
+  Runtime
+
+  Explanation Stability
+
+  Local Fidelity
+
+
+
+  3.4(a) The cost of LIME
+
+  Controlled variable: Number of perturbations - LIME’s cost is driven by how
+  many times it calls the black-box model.
+
+  Measured outcome: Wall-clock time per explanation, split by stage.
+
+  Total time per explanation is roughly:
+
+  T(N, d) ≈ T_sample(N, d) + T_predict(N, d, model) + T_weight(N, d) + T_fit(N,
+  k)
+
+  N: num_samples ex: (500, 1000, 2500, 5000)
+
+  d: number of features (54 in Covertype)
+
+  T_sample: generating N perturbations over d features. With the default
+  discretisation, this scales roughly as O(N·d).
+
+  T_predict: N black-box predictions. This term depends heavily on the model
+  and is where your four models will differ most.
+
+  T_weight: distance and kernel computation, O(N·d).
+
+  T_fit: fitting the weighted ridge surrogate on k selected features. Watch
+  feature_selection: the default 'auto' uses forward selection when k ≤ 6,
+  which fits many surrogates and can noticeably increase this term. Fix the
+  setting and state it in the paper.
+
+
+
+  Cost is only meaningful next to a quality measure at the same budget. For
+  each (model, d, N), we paired cost with:
+
+
+
+  Stability: Jaccard overlap of the top-k features across seeds for the same
+  instance.
+
+  Local fidelity: the surrogate’s weighted R² (explanation.score), or agreement
+  between local_pred and the true model output.
+
+
+
+  3.5 Measurement Protocol
+
+  3.6 Statistical Analysis
+
+  3.7 Controls & Reproducibility
+
+
+
+  Results/Analysis or Discussion
+
+  Graph and statistics
+
+  Summary of insights
+
+
+
+  Conclusion & Limitations
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  References
+  but now i have to write the results/analysis part. i don't want you to write
+  it yourself, but i do want you to write as much as you can gather so i can
+  write the section
+
+⏺ I'll dig through the repo for the experiment outputs and pull together
+  everything you'd need.
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && git ls-files | head -100 && echo
+      --- && ls -la)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && cat README.md
+      notes/experiment_handoff.md notes/claim_safe_fixes.…)
+  ⎿  Error: Exit code 1
+     # lime_study: controlled LIME cost/quality benchmark
+
+     This folder holds the controlled experiment for the paper *LIME
+     Cost/Quality Scaling on High-Dimensional Tabular Data across multiple
+     models*. It measures LIME **runtime**, **held-out fidelity and error** (the
+     surrogate's kernel-weighted R² and RMSE on fresh perturbations it was not
+     fitted on), **convergence** (top-5 Jaccard against two 50,000-sample
+     reference explanations) and **stability** (top-5 Jaccard across repeated
+     runs) for XGBoost, Logistic Regression and Random Forest on **UCI HAR**
+     (561 features, 6 classes, official subject-based train/test split). The
+     sweep covers 50, 100, 300 and 500 perturbed features, 500 to 10,000 LIME
+     samples, and 30 explained test rows (5 per class). The dataset choice and
+     its sources are in
+     [`notes/dataset_justification.md`](notes/dataset_justification.md).
+
+     The full methodology, the decisions behind it and the list of changes from
+     the old notebooks are in
+     [`notes/lime_study_rebuild_plan.md`](notes/lime_study_rebuild_plan.md).
+     Every design parameter and its rationale is in
+     [`notes/design_decisions.md`](notes/design_decisions.md), and every fix
+     made on the `claim-safe-fixes` branch, with sources, is in
+     [`notes/claim_safe_fixes.md`](notes/claim_safe_fixes.md). Only results from
+     this folder should go into the paper. The notebooks in `experiments/` are
+     kept for reference only.
+
+     ## Run
+
+     From the repository root:
+     … +96 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && git log --format='%h
+      %ad %s' --date=iso -- results figures | head…)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && find results figures
+      -type d; for f in figures/performance_table.…)
+  ⎿  (No output)
+
+⏺ The full run (21 Oct, run_id eb8bc381…) is the current one. Now let me
+  condense the main summary table and the model comparisons.
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && python3 - <<'EOF'
+      import pandas as pd…)
+  ⎿  (No output)
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Let me grab the remaining config values and compute a few derived "diminishing
+  returns" numbers you'd likely want.
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && sed -n 40,140p
+      config.py | grep -vE '^\s*$' | head -90; python3 -…)
+  ⎿  (No output)
+
+⏺ Let me look at the figures so I can tell you which one supports which point.
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Below is everything I could pull from the repo for the Results section. I
+  haven't written any prose for it. All numbers come from the full run on 21 Oct
+  2026 (run_id eb8bc381…). That run covers 9,000 timed explanations, 3,000 per
+  model, on an 8-core Apple Silicon Mac with packages pinned and single-threaded
+  BLAS. Those are the results the repo marks as paper-ready.
+
+  ⚠️ First: the draft Methodology doesn't match what was run
+
+  You'll want to fix these, or the Results won't line up with the Methods:
+
+  Draft says: d = 18, 36, 54 (and "54 in Covertype")
+  Actual run (config.py (lime_study/config.py)): d = 50, 100, 300, 500 on UCI
+  HAR
+  ────────────────────────────────────────
+  Draft says: 4 models incl. TabFM
+  Actual run (config.py (lime_study/config.py)): 3 models: LogReg, Random
+  Forest,
+  XGBoost (TabFM was removed)
+  ────────────────────────────────────────
+  Draft says: Fixed kernel width 0.75·√300
+  Actual run (config.py (lime_study/config.py)): Main run uses LIME's default
+  0.75·√d. The fixed-kernel and ranked-subset checks were only smoke-tested,
+  never fully run, so don't report them as results.
+  ────────────────────────────────────────
+  Draft says: Jaccard of top-k (k unstated), 10 features
+  Actual run (config.py (lime_study/config.py)): 10 features reported, but
+  Jaccard uses the top 5
+  ────────────────────────────────────────
+  Draft says: Fidelity = explanation.score
+  Actual run (config.py (lime_study/config.py)): Held-out weighted R² on 5,000
+  fresh perturbations, plus held-out RMSE. In-sample score is kept only for
+  comparison.
+  ────────────────────────────────────────
+  Draft says: —
+  Actual run (config.py (lime_study/config.py)): Also a convergence metric:
+  top-5
+  Jaccard against two 50,000-sample reference explanations
+  ────────────────────────────────────────
+  Draft says: feature_selection "watch k ≤ 6"
+  Actual run (config.py (lime_study/config.py)): auto → highest_weights, because
+
+  10 > 6
+  ────────────────────────────────────────
+  Draft says: Stats
+  Actual run (config.py (lime_study/config.py)): Class-stratified bootstrap 95%
+  CIs over the 30 cases; paired sign-flip tests with Holm correction. The
+  primary comparisons are fixed at N = 5,000 and cover runtime, RMSE and
+  reference Jaccard.
+
+  Model accuracy (held-out test set)
+
+  ┌─────────────────────┬──────────┬──────────┐
+  │        Model        │ Accuracy │ Macro-F1 │
+  ├─────────────────────┼──────────┼──────────┤
+  │ Logistic Regression │ 0.955    │ 0.954    │
+  ├─────────────────────┼──────────┼──────────┤
+  │ XGBoost             │ 0.941    │ 0.940    │
+  ├─────────────────────┼──────────┼──────────┤
+  │ Random Forest       │ 0.928    │ 0.927    │
+  └─────────────────────┴──────────┴──────────┘
+
+  RQ1: How runtime scales with N and d
+
+  Runtime per explanation, in seconds:
+
+  ┌─────────┬───────┬───────┬───────┬───────┬───────┐
+  │  d \ N  │  500  │ 1000  │ 2500  │ 5000  │ 10000 │
+  ├─────────┼───────┼───────┼───────┼───────┼───────┤
+  │ LR 50   │ 0.011 │ 0.016 │ 0.030 │ 0.053 │ 0.099 │
+  ├─────────┼───────┼───────┼───────┼───────┼───────┤
+  │ LR 500  │ 0.084 │ 0.124 │ 0.241 │ 0.438 │ 0.827 │
+  ├─────────┼───────┼───────┼───────┼───────┼───────┤
+  │ RF 50   │ 0.014 │ 0.019 │ 0.035 │ 0.065 │ 0.142 │
+  ├─────────┼───────┼───────┼───────┼───────┼───────┤
+  │ RF 500  │ 0.089 │ 0.133 │ 0.255 │ 0.465 │ 0.882 │
+  ├─────────┼───────┼───────┼───────┼───────┼───────┤
+  │ XGB 50  │ 0.023 │ 0.032 │ 0.057 │ 0.100 │ 0.183 │
+  ├─────────┼───────┼───────┼───────┼───────┼───────┤
+  │ XGB 500 │ 0.097 │ 0.139 │ 0.267 │ 0.480 │ 0.909 │
+  └─────────┴───────┴───────┴───────┴───────┴───────┘
+
+  Power-law fits (log T = a + b·log N + c·log d, R² > 0.99 for every model),
+  from figures/runtime_scaling.csv:
+
+  ┌─────────┬─────────────┬─────────────────┬─────────────┬─────────────────┐
+  │  Model  │  Exponent   │   ×time per     │  Exponent   │   ×time per     │
+  │         │    for N    │  doubling of N  │    for d    │  doubling of d  │
+  ├─────────┼─────────────┼─────────────────┼─────────────┼─────────────────┤
+  │ XGBoost │ 0.72        │ 1.65            │ 0.66        │ 1.58            │
+  ├─────────┼─────────────┼─────────────────┼─────────────┼─────────────────┤
+  │ LogReg  │ 0.75        │ 1.68            │ 0.90        │ 1.86            │
+  ├─────────┼─────────────┼─────────────────┼─────────────┼─────────────────┤
+  │ RF      │ 0.77        │ 1.70            │ 0.83        │ 1.78            │
+  └─────────┴─────────────┴─────────────────┴─────────────┴─────────────────┘
+
+  Points you could make:
+  - Runtime grows a bit slower than linearly in both N and d. All CIs are very
+    tight.
+  - Raising N 20× (500 → 10k) only raises time about 8–10×. A fixed per-call
+    overhead probably explains the gap.
+  - XGBoost depends least on d (exponent 0.66) but is the slowest at small d, so
+    its model inference is the expensive part.
+  - Model differences shrink as d grows. At d=50 XGBoost is about 1.9× slower
+    than LR; at d=500 the gap is about 10%. LIME's own sampling and weighting
+    costs, which scale with N·d, take over from black-box prediction. This ties
+    directly to your T_sample/T_predict/T_weight breakdown.
+  - At N=5,000, all 12 runtime model comparisons are significant (Holm p <
+    0.05), with XGBoost > RF > LR every time.
+  - Machine drift was small. Speed probes stayed within ±4% of the median, with
+    one spike of +10% (machine_drift.csv). The models were run interleaved in
+    randomised blocks.
+
+  RQ2: How quality changes with N and d
+
+  Stability (top-5 Jaccard between repeats):
+
+  ┌───────────┬────────┬──────┬──────┬──────┬───────┐
+  │ Model / d │ N=500  │ 1000 │ 2500 │ 5000 │ 10000 │
+  ├───────────┼────────┼──────┼──────┼──────┼───────┤
+  │ LR 50     │ .41    │ .49  │ .65  │ .68  │ .79   │
+  ├───────────┼────────┼──────┼──────┼──────┼───────┤
+  │ LR 500    │ (.00)* │ .18  │ .40  │ .53  │ .61   │
+  ├───────────┼────────┼──────┼──────┼──────┼───────┤
+  │ RF 50     │ .47    │ .60  │ .75  │ .80  │ .88   │
+  ├───────────┼────────┼──────┼──────┼──────┼───────┤
+  │ RF 500    │ (.02)* │ .29  │ .48  │ .60  │ .70   │
+  ├───────────┼────────┼──────┼──────┼──────┼───────┤
+  │ XGB 50    │ .38    │ .46  │ .63  │ .72  │ .81   │
+  ├───────────┼────────┼──────┼──────┼──────┼───────┤
+  │ XGB 300   │ .29    │ .55  │ .70  │ .81  │ .85   │
+  ├───────────┼────────┼──────┼──────┼──────┼───────┤
+  │ XGB 500   │ (.03)* │ .43  │ .66  │ .72  │ .75   │
+  └───────────┴────────┴──────┴──────┴──────┴───────┘
+
+  *N ≤ d (a low sample-to-feature ratio). Explanations here are essentially
+  random, so these points are kept out of the trend lines.
+
+  Held-out fidelity R²:
+  - Values are low overall, about 0.03–0.30. Even at N=10k the surrogate
+    explains at most about 30% of local variance. That deserves a sentence in
+    the discussion.
+  - Fidelity plateaus by roughly N = 2,500 and moves by less than 0.01 after
+    that. Examples: XGB d=500 goes 0.256 → 0.265 → 0.268; LR d=300 goes 0.077 →
+    0.085 → 0.088.
+  - Fidelity falls as d grows for LR (0.19 → 0.09) and RF (0.27 → 0.17). XGBoost
+    stays around 0.18–0.30.
+
+  In-sample vs held-out R² (a nice side finding):
+  - At small N, the score LIME reports itself (explanation.score) overstates
+    fidelity. For RF d=300 at N=500 it reports 0.238 against 0.071 held-out.
+  - The two converge by N ≈ 5k.
+
+  Convergence to the 50k reference:
+  - Agreement with the reference rises steadily with N.
+  - The reference ceiling is the agreement between the two reference
+    explanations: 0.80–0.97. All model × d cells pass the pre-set validity rule
+    (≥ 0.667).
+  - Relative to that ceiling, reaching about 90% generally needs N = 10,000. The
+    exception is XGBoost at d=300, which gets there at N = 5,000.
+  - At d ≥ 300, LR and RF stay below 90% even at 10k.
+
+  Effect of d at N=5,000 (from reference_check.csv, Holm-corrected):
+  - RF stability drops from 0.80 at d=50 to 0.60 at d=500 (p_holm = 0.005).
+  - LR drops from 0.68 at d=50 to 0.53 at d=300 (p_holm = 0.01).
+  - XGBoost shows no significant drop, and is non-monotonic: d=300 is its best
+    setting. Flag this carefully. It could come from which features the random
+    subset happened to include, and the ranked-subset check that would test this
+    wasn't fully run.
+
+  Diminishing returns (your "where extra compute stops paying off")
+
+  Gain in stability for each step up in N, shown as Δ Jaccard (extra seconds):
+
+  - XGB d=500:
+    - 1000→2500: +0.23 (+0.13 s)
+    - 2500→5000: +0.06 (+0.21 s)
+    - 5000→10000: +0.03 (+0.43 s)
+    - Cost per +0.01 Jaccard goes from 0.006 s to 0.137 s, about 20× worse.
+  - XGB d=300: 5000→10000 adds +0.035 for +0.27 s.
+  - LR and RF at d=500: they keep improving (+0.07 to +0.10 in the last step),
+    so they have not plateaued at 10k.
+  - Every model: cost per Jaccard point after N = 2,500 is roughly 5–20× what it
+    was below 2,500.
+
+  Smallest N where repeat stability reaches 0.7:
+
+  ┌───────┬───────┬───────┬───────┬───────┐
+  │ Model │ d=50  │ d=100 │ d=300 │ d=500 │
+  ├───────┼───────┼───────┼───────┼───────┤
+  │ RF    │ 2500  │ 5000  │ 10000 │ never │
+  ├───────┼───────┼───────┼───────┼───────┤
+  │ XGB   │ 5000  │ 10000 │ 2500  │ 5000  │
+  ├───────┼───────┼───────┼───────┼───────┤
+  │ LR    │ 10000 │ never │ never │ never │
+  └───────┴───────┴───────┴───────┴───────┘
+
+  A possible takeaway: fidelity saturates around N ≈ 2,500, but stability keeps
+  improving while getting increasingly expensive. Where it pays off depends on
+  the model and on d.
+
+  RQ3: How the black-box model changes the trade-off
+
+  All of these are primary paired tests at N=5,000, Holm-corrected:
+  - Runtime: XGBoost is significantly slowest at every d (+0.03 to +0.05 s per
+    explanation vs LR).
+  - Reference Jaccard:
+    - Significant only at d=300, where XGB beats LR by +0.25 and RF by +0.16.
+    - Also at d=100, where LR is below RF by 0.16.
+    - Everything else is not significant.
+  - Cost vs quality (cost_vs_quality.png): at small d (50, 100), RF gives the
+    best quality per second. At d ≥ 300, XGBoost's curve sits highest. It costs
+    a bit more but converges much better. LR is the worst at high d.
+  - Caveat on RMSE: held-out RMSE mostly tracks how much the model's output
+    moves locally (target_sd). LR's large RMSE at high d (about 0.34) matches
+    its target_sd of about 0.35. Don't read RMSE as "LR explanations are worse"
+    without saying so.
+  - Flat cases: these have an output SD below 0.01, so R² is dropped for them.
+    That affects 20 of 30 XGB cases and 13 of 30 LR cases at d=50, so R² in
+    those cells rests on fewer cases.
+
+  Figures to use (in lime_study/figures/, PNG + PDF)
+
+  - lime_overview.png: a 3×4 grid of runtime, held-out R² and stability against
+    N, one column per d, with CI bands. This is the best single main figure.
+  - cost_vs_quality.png: reference Jaccard against runtime. This answers the
+    cost/quality question directly.
+  - lime_scaling_grid.png (adds RMSE) and lime_stability_grid.png (adds
+    references): these are backups or appendix figures.
+
+  Limitations to mention later
+
+  - One dataset and one machine.
+  - 30 cases from only 9 test participants. The participant-clustered CIs are
+    wider; they're the _cluster columns in the CSVs.
+  - Random feature subsets, with the fixed-kernel and ranked-subset checks never
+    fully run.
+  - Low absolute fidelity.
+  - The source note warns that the literature references in notes/ were "cited
+    from memory", so check them before citing.
+
+  Raw sources if you need more detail:
+  - combined_summary.csv (lime_study/figures/combined_summary.csv): every cell,
+    with CIs
+  - paired_differences.csv (lime_study/figures/paired_differences.csv)
+  - runtime_scaling.csv (lime_study/figures/runtime_scaling.csv)
+  - reference_check.csv (lime_study/figures/reference_check.csv)
+
+❯ for now i have the following:
+  Runtime:
+  - It seems the runtimes increase linearly as the number of samples increase.
+  - As you add more features, the runtime increase more per sample.
+  - Logistic Regression  fastest, random forest second, and XGBoost last.
+
+  Fidelity:
+  - The fidelity increases initially before levelling out at around 2500-5000
+  samples.
+  - XGBoost has highest fidelity on average across different number of
+  features. Followed by random fires and logistic regression.
+  - The reason fidelity might be so low across the models is due to the dataset
+  used. (May need some reasoning here or refer to limitation section).
+
+  Stability:
+  - In lower dimensions, random forest trumped. In higher dimensions, XGBoost
+  was the highest.
+  - As we increase number of features, the stability increaser faster per
+  sample, and at higher dimensions, it begins to level out by 10k.
+    can you verify and maybesupplement these, maybe add some more actual
+  numerical data, introduce terminology regarding graphs, and maybe suggest
+  some more points
+
+⏺ I'll check a couple of your claims against the raw numbers first, mainly
+  whether runtime is really linear in N and whether the stability ranking holds
+  up statistically.
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && python3 - <<'EOF'
+      import pandas as pd, numpy as np…)
+  ⎿  (No output)
+
+⏺ Your notes are mostly right. Two points need rewording: stability has not
+  levelled out at high d for every model, and "linear" needs a small qualifier.
+  Below I go through each point (✅ correct, ⚠️ partly right, ❌ wrong), with
+  numbers you can quote. After that come graph terminology and some extra
+  points.
+
+  Runtime
+
+  "Runtimes increase linearly as samples increase" ✅ (with a refinement)
+  - A straight line T = a + b·N fits each model × d combination almost perfectly
+    (R² ≥ 0.993, and 1.000 for most).
+  - More precisely, runtime is affine: a fixed overhead per explanation plus a
+    constant cost per sample.
+    - For XGBoost at d=500 the overhead is about 53 ms, plus about 86 ms per
+      1,000 samples.
+  - This explains the log-log exponent of about 0.72–0.77 (below 1) from the
+    earlier output. The fixed overhead makes small N look relatively expensive.
+  - So 20× more samples (500 → 10k) costs only about 8–10× more time, not 20×.
+
+  "More features → runtime increases more per sample" ✅ This is an interaction
+  effect between N and d. Here is the cost per 1,000 samples (the slope):
+
+  ┌─────┬───────┬───────┬───────┐
+  │  d  │  LR   │  RF   │  XGB  │
+  ├─────┼───────┼───────┼───────┤
+  │ 50  │ 9 ms  │ 14 ms │ 17 ms │
+  ├─────┼───────┼───────┼───────┤
+  │ 500 │ 78 ms │ 84 ms │ 86 ms │
+  └─────┴───────┴───────┴───────┘
+
+  - 10× more features gives roughly a 5–8× steeper slope.
+  - The fixed overhead also grows with d, from about 4–15 ms to about 46–53 ms.
+
+  "LR fastest, RF second, XGBoost last" ✅
+  - The ranking holds in every one of the 20 N × d settings.
+  - All 12 runtime comparisons at N=5,000 are statistically significant
+    (Holm-corrected p < 0.05).
+  - Point to add: the gap between models shrinks as d grows.
+    - At d=50, N=10k: XGB 0.183 s vs LR 0.099 s, so XGB is about 1.85× slower.
+    - At d=500, N=10k: XGB 0.909 s vs LR 0.827 s, so XGB is only about 1.10×
+      slower.
+    - The likely reason: at high d, LIME's own work dominates the total time.
+      Generating perturbations and computing distances and weights both scale
+      with N·d, while the black-box prediction step stays small. This ties back
+      to your T_sample + T_predict + T_weight + T_fit breakdown.
+
+  Fidelity
+
+  "Fidelity increases initially then levels off around 2,500–5,000" ✅
+  - Above N = 2,500, the held-out R² rises by less than 0.01–0.02 in almost
+    every setting.
+    - XGB d=500: 0.256 → 0.265 → 0.268
+    - LR d=300: 0.077 → 0.085 → 0.088
+  - Specify that this is held-out R² on fresh perturbations, not LIME's own
+    explanation.score.
+
+  "XGBoost highest on average, then RF, then LR" ⚠️ True on average, but not at
+  every d. Mean held-out R² for N ≥ 2,500:
+
+  ┌─────┬──────┬──────┬──────┬──────┬──────┐
+  │     │ d=50 │ 100  │ 300  │ 500  │ avg  │
+  ├─────┼──────┼──────┼──────┼──────┼──────┤
+  │ XGB │ 0.30 │ 0.18 │ 0.25 │ 0.26 │ 0.25 │
+  ├─────┼──────┼──────┼──────┼──────┼──────┤
+  │ RF  │ 0.27 │ 0.25 │ 0.20 │ 0.16 │ 0.22 │
+  ├─────┼──────┼──────┼──────┼──────┼──────┤
+  │ LR  │ 0.19 │ 0.09 │ 0.08 │ 0.08 │ 0.11 │
+  └─────┴──────┴──────┴──────┴──────┴──────┘
+
+  - At d=100, RF beats XGB.
+  - At d=50 and d=100, the XGB vs RF difference is not statistically
+    significant.
+    - XGB's confidence band at d=50 is very wide (0.17–0.43), because 20 of its
+      30 cases were excluded as "flat". In those cases the model's predicted
+      probability barely changes when features are perturbed, so R² isn't
+      meaningful.
+  - XGB's lead is clear and significant only at d = 300 and 500.
+  - Notice how LR falls sharply with d (0.19 → 0.08) while XGB holds steady.
+    That's worth stating.
+
+  "Fidelity is low because of the dataset" ⚠️ You didn't test this, so present
+  it as a possible explanation rather than a finding. More defensible reasons,
+  which belong in the discussion or limitations:
+  1. LIME fits a linear surrogate on only 10 features while perturbing 50–500.
+     Most of the model's local variation can't be captured.
+  2. Quartile discretisation turns each continuous feature into 4 bins, which
+     loses information.
+  3. The default kernel width grows with d (0.75·√d), so the "local"
+     neighbourhood gets wider and less linear as d increases.
+  4. The dataset angle: UCI HAR's 561 features are engineered from the same few
+     sensor signals and are highly correlated. Perturbing them independently
+     produces unrealistic inputs, and LIME's surrogate spreads importance across
+     redundant features.
+  5. Also mention that LIME's built-in in-sample score overstates fidelity at
+     low N. For RF at d=300, N=500 it reports 0.24 against 0.07 held-out. This
+     justifies your choice of metric.
+
+  Stability
+
+  "In lower dimensions RF is best, in higher dimensions XGBoost is best" ✅ This
+  is a crossover (rank reversal). Repeat Jaccard at N=5,000:
+
+  ┌─────┬──────┬──────┬──────┐
+  │  d  │  RF  │ XGB  │  LR  │
+  ├─────┼──────┼──────┼──────┤
+  │ 50  │ 0.80 │ 0.72 │ 0.68 │
+  ├─────┼──────┼──────┼──────┤
+  │ 100 │ 0.77 │ 0.69 │ 0.62 │
+  ├─────┼──────┼──────┼──────┤
+  │ 300 │ 0.64 │ 0.81 │ 0.53 │
+  ├─────┼──────┼──────┼──────┤
+  │ 500 │ 0.60 │ 0.72 │ 0.53 │
+  └─────┴──────┴──────┴──────┘
+
+  - XGB beating RF and LR at d=300 is statistically significant after
+    correction.
+  - At d=50, 100 and 500 the differences show in the confidence intervals but
+    don't survive Holm correction. So say "trend" rather than "significant" for
+    those.
+  - LR is the least stable in nearly every setting.
+
+  "As d increases, stability increases faster per sample, and levels out by 10k
+  at high d" ❌ This needs rewording.
+  - Faster per sample: the steeper early rise at high d exists because those
+    curves start much lower. At N=500, d=500, stability is roughly 0.01–0.03,
+    which is essentially random (N ≤ d, shown as hollow markers). Overall,
+    stability is lower at high d for every N.
+  - Levelling out by 10k: this is only true for XGBoost at d ≥ 300. The 5k → 10k
+    step adds just +0.03 to +0.04.
+  - LR and RF are still clearly rising at d=500 (+0.07 to +0.10 in the last
+    step), so they haven't plateaued by 10k.
+  - Suggested rewording: "Stability drops as d grows. It does so significantly
+    for RF (0.80 → 0.60) and LR (0.68 → 0.53) at N = 5,000, but not for XGBoost.
+    Only XGBoost reaches a plateau by 10k samples."
+
+  Graph terminology you can use
+
+  - Small multiples / faceted panels: one column per d. Rows are runtime,
+    fidelity and stability (from lime_overview.png).
+  - 95% bootstrap confidence bands: the shaded areas. Overlapping bands mean the
+    difference is uncertain.
+  - Hollow markers: N ≤ d settings, shown but excluded from the lines.
+  - Affine / linear scaling, slope (cost per sample), intercept (fixed
+    overhead).
+  - Scaling exponent: the slope on a log-log plot. Below 1 is sublinear.
+  - Plateau / saturation, elbow (knee) point, diminishing returns: for the
+    fidelity and stability curves.
+  - Monotonic / non-monotonic: XGB stability is non-monotonic in d, because
+    d=300 is its best setting.
+  - Crossover / rank reversal: the RF → XGB switch in stability.
+  - Cost–quality frontier (Pareto front): in cost_vs_quality.png, the curve that
+    sits higher at the same runtime is the better trade-off.
+  - Interaction effect: d changes the effect of N, and the reverse.
+
+  Points worth adding
+
+  1. Diminishing returns in numbers. For XGB at d=500:
+     - 1k → 2.5k samples adds +0.23 Jaccard for +0.13 s.
+     - 5k → 10k adds only +0.03 for +0.43 s.
+     - That is about 20× more seconds per unit of stability gained. This
+       directly answers your research question about where extra computation
+       stops helping.
+  2. Fidelity and stability saturate at different points. Fidelity flattens
+     around 2.5k samples, while stability keeps improving at a growing cost.
+     "More samples" therefore mainly buys consistency, not accuracy of the
+     surrogate.
+  3. The N ≤ d failure. At N=500 with d=500, explanations are effectively random
+     (Jaccard 0.00–0.03). This is a concrete lower bound on how many samples
+     LIME needs.
+  4. Convergence to a 50k-sample reference. Getting within about 90% of the
+     reference ceiling generally takes 10k samples. The one exception is XGB at
+     d=300, which needs 5k. LR and RF at d ≥ 300 never get there.
+  5. Practical recommendation: the cost–quality plot shows RF gives the best
+     quality per second at low d, and XGB at high d. LIME's default of 5k
+     samples is past the fidelity plateau but not yet at the stability plateau.
+  6. Model accuracy doesn't predict explanation quality. LR is the most accurate
+     model (95.5%) but gives the least stable and least faithful LIME
+     explanations.
+
+❯ can you re-write all of this into a more polished format in a .md file
+
+⏺ Write(lime_study/notes/results_findings.md)
+  ⎿  Wrote 255 lines to lime_study/notes/results_findings.md
+      1 # Results & Analysis: Findings Brief
+      3 Supporting material for writing the Results/Analysis section of *
+        Explainable AI: LIME Cost/Quality Scaling on High-Dimensional Tab
+        umbers and suggested wording, not the final prose.
+      5 All numbers come from the **full run of 21 October 2026** (run_id
+         `eb8bc381…`):
+      7 - 3 models × 4 values of d × 5 values of N × 30 explained cases ×
+         5 repeats, giving **9,000 timed explanations** (3,000 per model)
+         interleaved in randomised blocks on one machine (8-core Apple Si
+      9 - Source tables: `lime_study/figures/combined_summar
+     … +364 lines (ctrl+o to expand)
+
+⏺ Written for: you and your teammates, as notes to work from when writing the
+  Results section.
+
+  I've put everything into one file: results_findings.md
+  (lime_study/notes/results_findings.md). It isn't committed yet. It holds the
+  material from my last two replies, with the verdicts on your draft points and
+  the numbers backing each one.
+
+  - Methodology fixes come first. The draft Methods describes a different setup
+    from what was run (feature counts, TabFM, kernel width), and the Results
+    won't match until that's fixed.
+  - Your notes are marked confirmed, partly correct, or needs rewording. Each
+    comes with a suggested rewording, including the corrected version of your
+    stability point.
+  - I added three things:
+    - which figure to use for each point
+    - the graph terms to describe them
+    - a short limitations list for your Conclusion & Limitations section
+
+  Every number traces back to the 21 Oct full run.
+
+❯ get rid of anything saying that the current paper draft is not up to date
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 11 lines, removed 12 lines
+      12  
+      13  ---
+      14  
+      15 -## 0. Methodology mismatches to fix first                      
+      15 +## 0. Experimental setup (as run)                              
+      16  
+      17 -The Methodology draft doesn't match what was actually run. If i
+         -t isn't fixed, the Results won't line up with it.              
+      18 -                                                               
+      19 -| Draft says | What was actually run (`lime_study/config.py`) |
+      17 +| Setting | Value (`lime_study/config.py`) |                   
+      18  |---|---|
+      21 -| d = 18, 36, 54 ("54 in Covertype") | **d = 50, 100, 300, 500*
+         -* on UCI HAR |                                                 
+      22 -| Four models including TabFM | **Three models**: Logistic Regr
+         -ession, Random Forest, XGBoost (TabFM removed) |               
+      23 -| Fixed kernel width 0.75·√300 | Main run uses LIME's **default
+         - 0.75·√d**. The fixed-kernel and ranked-subset checks were only
+         - smoke-tested, so don't report them as results. |              
+      24 -| Top-k Jaccard (k unstated), 10 features | 10 features per exp
+         -lanation; **Jaccard uses the top 5** |                         
+      25 -| Fidelity = `explanation.score` | **Held-out kernel-weighted R
+         -²** on 5,000 fresh perturbations, plus held-out RMSE. The in-sa
+         -mple score is kept only for comparison. |                      
+      26 -| (not mentioned) | **Convergence** metric: top-5 Jaccard again
+         -st two 50,000-sample reference explanations |                  
+      27 -| feature_selection: "watch k ≤ 6" | `auto`, which resolves to 
+         -`highest_weights` because 10 > 6 |                             
+      28 -| Statistics (empty) | Class-stratified bootstrap 95% CIs over 
+         -the 30 cases; paired sign-flip permutation tests with Holm corr
+         -ection. The primary family is fixed at N = 5,000 (LIME's defaul
+         -t) and covers runtime, held-out RMSE and reference Jaccard. |  
+      19 +| Dataset | UCI HAR (561 features, 6 classes) |                
+      20 +| Perturbed features (d) | **50, 100, 300, 500** |             
+      21 +| Models | Logistic Regression, Random Forest, XGBoost |       
+      22 +| Kernel width | LIME default, **0.75·√d** |                   
+      23 +| Features per explanation | 10; **Jaccard uses the top 5** |  
+      24 +| Fidelity | **Held-out kernel-weighted R²** on 5,000 fresh per
+         +turbations, plus held-out RMSE. The in-sample score is kept onl
+         +y for comparison. |                                            
+      25 +| Convergence | Top-5 Jaccard against two 50,000-sample referen
+         +ce explanations |                                              
+      26 +| feature_selection | `auto`, which resolves to `highest_weight
+         +s` because 10 > 6 |                                            
+      27 +| Statistics | Class-stratified bootstrap 95% CIs over the 30 c
+         +ases; paired sign-flip permutation tests with Holm correction. 
+         +The primary family is fixed at N = 5,000 (LIME's default) and c
+         +overs runtime, held-out RMSE and reference Jaccard. |          
+      28  
+      29  ---
+      30  
+
+⏺ I've removed everything in results_findings.md
+  (lime_study/notes/results_findings.md) that said the paper draft was out of
+  date. Section 0 used to compare the draft against the actual run; it's now a
+  plain "Experimental setup (as run)" table. It lists what was used (d =
+  50/100/300/500, the three models, kernel width, top-5 Jaccard, the metrics and
+  the statistics) and no longer mentions the draft.
+
+  The rest of the file never referred to the draft, so nothing else changed. I
+  kept the limitation saying the fixed-kernel and ranked-subset checks weren't
+  fully run, because that's about the experiment itself.
+
+❯ in this, don't quote me and then say "reword this", this is where i want you
+  to reword everything anyways, to give the actual facts
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      1  # Results & Analysis: Findings Brief
+      2  
+      3 -Supporting material for writing the Results/Analysis section of 
+        -*Explainable AI: LIME Cost/Quality Scaling on High-Dimensional T
+        -abular Data across Multiple Models*. These are verified findings
+        -, numbers and suggested wording, not the final prose.           
+      3 +Supporting material for writing the Results/Analysis section of 
+        +*Explainable AI: LIME Cost/Quality Scaling on High-Dimensional T
+        +abular Data across Multiple Models*. These are the findings and 
+        +numbers, not the final prose.                                   
+      4  
+      5  All numbers come from the **full run of 21 October 2026** (run_i
+         d `eb8bc381…`):
+      6  
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Removed 2 lines
+       8  - Pinned package versions, single-threaded BLAS, all three mode
+          ls interleaved in randomised blocks on one machine (8-core Appl
+          e Silicon Mac)
+       9  - Source tables: `lime_study/figures/combined_summary.csv`, `pa
+          ired_differences.csv`, `runtime_scaling.csv`, `reference_check.
+          csv`
+      10  
+      11 -Legend: ✅ claim confirmed · ⚠️ partly correct, needs qualifyin
+         -g · ❌ needs rewording.                                        
+      12 -                                                               
+      11  ---
+      12  
+      13  ## 0. Experimental setup (as run)
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      51  
+      52  ### 2.2 Findings
+      53  
+      54 -**✅ Runtime grows linearly with N, with a fixed overhead.**   
+      54 +**Runtime grows linearly with N, on top of a fixed overhead.** 
+      55  - A straight line T = a + b·N fits every model × d setting almo
+          st perfectly (R² ≥ 0.993, and 1.000 for most).
+      56  - Strictly, the relationship is **affine**: a fixed overhead pe
+          r explanation (a) plus a constant cost per sample (b).
+      57  - Because of that overhead, 20× more samples (500 → 10,000) cos
+          ts only **8–10× more time**.
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      57  - Because of that overhead, 20× more samples (500 → 10,000) cos
+          ts only **8–10× more time**.
+      58  - On a log-log plot, the fitted scaling exponent for N is there
+          fore below 1 (**sublinear**): 0.72 for XGB, 0.75 for LR and 0.7
+          7 for RF. Doubling N multiplies runtime by about 1.65–1.70.
+      59  
+      60 -**✅ Each extra sample costs more as d grows.** This is an **in
+         -teraction effect** between N and d.                            
+      60 +**Each extra sample costs more as d grows.** This is an **inter
+         +action effect** between N and d.                               
+      61  
+      62  | d | LR slope | RF slope | XGB slope | Fixed overhead (range a
+          cross models) |
+      63  |---|---|---|---|---|
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      69  - 10× more features gives a **5–8× steeper cost per sample**.
+      70  - The fitted scaling exponent for d is 0.66 for XGB, 0.83 for R
+          F and 0.90 for LR. Doubling d multiplies runtime by about 1.58–
+          1.86.
+      71  
+      72 -**✅ Logistic Regression is fastest, then Random Forest, then X
+         -GBoost.**                                                      
+      72 +**Logistic Regression is fastest, then Random Forest, then XGBo
+         +ost.**                                                         
+      73  - The ranking holds in all 20 N × d settings.
+      74  - All 12 primary runtime comparisons at N = 5,000 are significa
+          nt (Holm-corrected p < 0.05).
+      75  
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      73  - The ranking holds in all 20 N × d settings.
+      74  - All 12 primary runtime comparisons at N = 5,000 are significa
+          nt (Holm-corrected p < 0.05).
+      75  
+      76 -**New point: the gap between models shrinks as d grows.**      
+      76 +**The gap between models shrinks as d grows.**                 
+      77  - At d = 50, N = 10k, XGB takes 0.183 s against 0.099 s for LR,
+           about **1.85×** slower.
+      78  - At d = 500, N = 10k, XGB takes 0.909 s against 0.827 s for LR
+          , only about **1.10×** slower.
+      79  - Likely reason: at high d, LIME's own work dominates the total
+           time. Generating perturbations (T_sample) and computing distan
+          ces and kernel weights (T_weight) both scale with N·d, so the b
+          lack-box prediction step (T_predict), where the models differ, 
+          becomes a small share. This ties the results back to the cost d
+          ecomposition in Section 3.4(a).
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+       97  
+       98  ### 3.2 Findings
+       99  
+      100 -**✅ Fidelity rises at first, then plateaus at about 2,500–5,0
+          -00 samples.**                                                 
+      100 +**Fidelity rises at first, then plateaus at about 2,500–5,000 
+          +samples.**                                                    
+      101  - Above N = 2,500, held-out R² changes by less than 0.01–0.02 
+           in almost every setting.
+      102    - XGB at d = 500: 0.256 → 0.265 → 0.268
+      103    - LR at d = 300: 0.077 → 0.085 → 0.088
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 2 lines, removed 2 lines
+      102    - XGB at d = 500: 0.256 → 0.265 → 0.268
+      103    - LR at d = 300: 0.077 → 0.085 → 0.088
+      104  
+      105 -**⚠️ XGBoost has the highest fidelity on average, but not at e
+          -very d.**                                                     
+      106 -- Across all d, the average order is XGB, then RF, then LR.   
+      105 +**XGBoost has the highest fidelity on average, but not at ever
+          +y d.**                                                        
+      106 +- Averaged across all d, the order is XGB (0.25), then RF (0.2
+          +2), then LR (0.11).                                           
+      107  - At **d = 100, RF beats XGB** (0.25 vs 0.18).
+      108  - At d = 50 and 100 the XGB vs RF difference is **not statisti
+           cally significant**:
+      109    - XGB's confidence band at d = 50 is very wide (0.17–0.43) b
+           ecause 20 of its 30 cases were "flat" (the predicted probabili
+           ty moved by less than 0.01 under perturbation), so R² rests on
+            only 10 cases.
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      110  - XGB's lead is clear and significant only at **d = 300 and 50
+           0**.
+      111  - LR's fidelity **falls sharply as d grows** (0.19 → 0.08), wh
+           ile XGBoost's holds steady.
+      112  
+      113 -**⚠️ Fidelity is low for every model (R² ≈ 0.03–0.30).** Even 
+          -at 10,000 samples, the surrogate explains at most about 30% of
+          - the model's local variation. Saying this is "because of the d
+          -ataset" is a possible explanation, not something the study tes
+          -ted. More defensible reasons, for the Discussion or Limitation
+          -s:                                                            
+      113 +**Fidelity is low for every model (R² ≈ 0.03–0.30).** Even at 
+          +10,000 samples, the surrogate explains at most about 30% of th
+          +e model's local variation. The study did not test the cause, s
+          +o these are likely explanations for the Discussion or Limitati
+          +ons:                                                          
+      114  1. **Surrogate capacity.** LIME fits a linear model on only 10
+            features while perturbing 50–500, so most of the model's loca
+           l behaviour can't be captured.
+      115  2. **Discretisation.** The quartile discretiser reduces each c
+           ontinuous feature to 4 bins, which loses information.
+      116  3. **Kernel width.** The default width grows with d (0.75·√d),
+            so the "local" neighbourhood gets wider, and less linear, as 
+           d increases.
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      116  3. **Kernel width.** The default width grows with d (0.75·√d),
+            so the "local" neighbourhood gets wider, and less linear, as 
+           d increases.
+      117  4. **Dataset structure.** UCI HAR's 561 features are engineere
+           d from a few sensor signals and are highly correlated. Perturb
+           ing them independently produces unrealistic inputs, and import
+           ance gets spread across redundant features.
+      118  
+      119 -**New point: LIME's built-in score overstates fidelity at smal
+          -l N.**                                                        
+      119 +**LIME's built-in score overstates fidelity at small N.**     
+      120  - For RF at d = 300 with N = 500, `explanation.score` (in-samp
+           le) reports **0.24**, against **0.07** held-out.
+      121  - The two measures only converge by N ≈ 5,000. This justifies 
+           using held-out fidelity.
+      122  
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      153  
+      154  ### 4.3 Findings
+      155  
+      156 -**✅ Random Forest is most stable at low d, XGBoost at high d.
+          -** This is a **crossover (rank reversal)**.                   
+      156 +**Random Forest is most stable at low d, XGBoost at high d.** 
+          +This is a **crossover (rank reversal)**.                      
+      157  - XGBoost's lead at d = 300 over both RF (+0.17) and LR (+0.28
+           ) is **significant** after Holm correction.
+      158  - At d = 50, 100 and 500 the gaps show in the confidence inter
+           vals but **don't survive correction**. Describe these as trend
+           s.
+      159  - LR is the least stable model in nearly every setting.
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 9 lines, removed 7 lines
+      158  - At d = 50, 100 and 500 the gaps show in the confidence inter
+           vals but **don't survive correction**. Describe these as trend
+           s.
+      159  - LR is the least stable model in nearly every setting.
+      160  
+      161 -**❌ "Stability increases faster per sample at higher d and le
+          -vels out by 10k." Reword this.**                              
+      162 -- The steeper early rise at high d exists only because those c
+          -urves **start much lower**: about 0.01–0.03 at N = 500, d = 50
+          -0.                                                            
+      163 -- At every N, stability is **lower** at high d than at low d. 
+      164 -- Only **XGBoost** at d ≥ 300 plateaus. Its 5k → 10k step adds
+          - just +0.03 to +0.04.                                         
+      165 -- **LR and RF are still clearly rising at d = 500** (+0.07 to 
+          -+0.10 in the last step), so they have **not** levelled out by 
+          -10k.                                                          
+      161 +**Stability decreases as d grows, for Random Forest and Logist
+          +ic Regression.**                                              
+      162 +- At N = 5,000, RF drops from 0.80 at d = 50 to 0.60 at d = 50
+          +0 (Holm p = 0.005), and LR from 0.68 to 0.53 (Holm p = 0.01 at
+          + d = 300).                                                    
+      163 +- XGBoost shows no significant drop with d.                   
+      164 +- At every N, RF and LR are less stable at high d than at low 
+          +d.                                                            
+      165  
+      167 -**Suggested wording:** "Stability decreases as d grows. The dr
+          -op is significant for Random Forest (0.80 → 0.60) and Logistic
+          - Regression (0.68 → 0.53) at N = 5,000, but not for XGBoost. O
+          -nly XGBoost reaches a plateau within 10,000 samples."         
+      166 +**Stability keeps rising with N, and the curves at high d star
+          +t much lower.**                                               
+      167 +- At N = 500, d = 500, stability is about 0.01–0.03, so the ea
+          +rly part of the high-d curves rises steeply from near zero.   
+      168 +- Only **XGBoost at d ≥ 300 reaches a plateau** within 10,000 
+          +samples. Its 5k → 10k step adds just +0.03 to +0.04.          
+      169 +- **LR and RF at d = 500 are still clearly rising** at 10k (+0
+          +.07 to +0.10 in the last step).                               
+      170  
+      169 -**New point: XGBoost's stability is non-monotonic in d.** d = 
+          -300 is its best setting. This may come from which features the
+          - random subset happened to include. The ranked-subset check th
+          -at would test this wasn't run in full, so flag it as an open q
+          -uestion.                                                      
+      171 +**XGBoost's stability is non-monotonic in d.** d = 300 is its 
+          +best setting. This may come from which features the random sub
+          +set happened to include. The ranked-subset check that would te
+          +st this wasn't run in full, so flag it as an open question.   
+      172  
+      173  ---
+      174  
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      159  - LR is the least stable model in nearly every setting.
+      160  
+      161  **Stability decreases as d grows, for Random Forest and Logist
+           ic Regression.**
+      162 -- At N = 5,000, RF drops from 0.80 at d = 50 to 0.60 at d = 50
+          -0 (Holm p = 0.005), and LR from 0.68 to 0.53 (Holm p = 0.01 at
+          - d = 300).                                                    
+      162 +- At N = 5,000, RF drops from 0.80 at d = 50 to 0.60 at d = 50
+          +0 (Holm p = 0.005), and LR from 0.68 at d = 50 to 0.53 at d = 
+          +300 (Holm p = 0.01). LR's drop to d = 500 is the same size but
+          + not significant after correction (Holm p = 0.09).            
+      163  - XGBoost shows no significant drop with d.
+      164  - At every N, RF and LR are less stable at high d than at low 
+           d.
+      165  
+
+⏺ I've rewritten results_findings.md (lime_study/notes/results_findings.md) so
+  it states the findings directly. The ✅/⚠️/❌ verdicts, the quoted claims,
+  "reword this", "suggested wording" and "new point" labels are all gone.
+
+  The parts that changed most:
+  - Stability: this is now two plain findings.
+    - Stability drops as d grows for Random Forest and Logistic Regression, but
+      not for XGBoost.
+    - Only XGBoost reaches a plateau within 10k samples.
+  - LR's stability drop: while rewriting it I fixed a number that was stated
+    loosely. The drop from 0.68 to 0.53 is significant at d = 300 (Holm p =
+    0.01). The same-sized drop at d = 500 doesn't survive correction (p = 0.09).
+  - Low fidelity: it now says plainly that the study didn't test the cause, then
+    lists the likely reasons.
+  - Fidelity ranking: this now gives the average values (XGB 0.25, RF 0.22, LR
+    0.11).
+
+  The tables and the figure, terminology and limitations sections are unchanged.
+
+❯ based on the results of the experiment, i need to write up a section about
+  the results and an analysis of them.
+  which means i need to get some key figures, maybe describe what is seen in
+  the graphs, and maybe a small explanation of why it would make sense or
+  wouldn't.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ User answered Claude's questions:
+  ⎿  · Earlier you said you'd write the section yourself. For this step, how far
+     should I go? → Material only (Recommended)
+
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/based-on-the-results-lively-cosmos.md ·
+     /plan to edit
+     Plan: Results & Analysis writing material
+
+     Context
+
+     The user is writing the Results & Analysis section of the paper themselves.
+     They need three things:
+     - key figures to quote
+     - a description of what each graph shows
+     - a short explanation of why each result makes sense, or doesn't
+
+     They chose material only: bullet points they turn into prose, not drafted
+     paragraphs.
+
+     lime_study/notes/results_findings.md already holds the verified numbers,
+     organised by metric. What's missing is a quick list of headline numbers, a
+     panel-by-panel walkthrough of the figures, and the reasoning behind each
+     result. Everything is drawn from the full run of 21 Oct 2026
+     (lime_study/figures/*.csv, lime_study/results/*).
+
+     Approach
+
+     Add three new sections to lime_study/notes/results_findings.md, placed
+     before the current tables so they're the first thing the user reads. Keep
+     the existing sections 0–8 as the detailed reference underneath; they've
+     been user-edited, so leave them as they are. Write facts directly: no
+     verdicts, no quoting the user's earlier notes.
+
+     A. Headline figures (about 10 bullets, one number each)
+
+     - Runtime is affine in N (R² ≥ 0.993). 20× more samples costs 8–10× more
+       time.
+     - Cost per 1k samples rises from 9–17 ms at d = 50 to 78–86 ms at d = 500.
+     - Speed order is LR < RF < XGB in all 20 settings. The XGB/LR gap shrinks
+       from 1.85× at d = 50 to 1.10× at d = 500.
+     - Fidelity plateaus by N ≈ 2,500 at R² of only 0.08–0.30.
+     - Stability crossover: RF is best at d ≤ 100 (0.80), XGB at d ≥ 300 (0.81,
+       significant at d = 300).
+     - Diminishing returns for XGB at d = 500: each stability point costs 0.006
+       s → 0.137 s, about 20× more.
+     - N ≤ d collapse: Jaccard 0.00–0.03.
+     - LIME's in-sample score overstates fidelity (0.24 vs 0.07).
+     - The most accurate model, LR at 95.5%, gives the weakest explanations.
+
+     B. What the graphs show (one block per figure)
+
+     - lime_overview.png, described row by row (runtime / fidelity / stability)
+       and column by column (d):
+       - lines get steeper to the right as d grows
+       - the fidelity curves flatten early
+       - the stability curves keep climbing
+       - hollow markers at N = 500, d = 500
+       - CI band width: XGB's wide fidelity band at d = 50
+       - where lines cross
+     - cost_vs_quality.png: how to read it (each point is a sample budget,
+       moving right means more time, moving up means better convergence).
+       - The frontier is RF at low d and XGB at high d.
+       - The curves bend over, which is diminishing returns.
+     - lime_scaling_grid.png and lime_stability_grid.png: a short note on what
+       each adds (RMSE, and the reference/ceiling lines).
+       - Look at both images first (read-only) so the descriptions match what's
+         drawn.
+     - Include a suggested figure caption for the two main figures.
+
+     C. Why the results make sense (or don't)
+
+     Each item gives the finding, the likely mechanism, and how confident we can
+     be. Mark mechanisms as explanations, not tested results.
+     1. Runtime is affine. LIME's work per sample is fixed: sample, predict,
+        compute distance and weight, then one ridge fit. That makes runtime
+        linear in N, plus a per-call setup overhead. Expected.
+     2. Cost per sample grows with d. Building the perturbations, the
+        discretised representation and the distances is O(N·d). Expected.
+     3. Model ranking. LR's prediction is a single matrix multiply. RF has to
+        walk every tree. XGB evaluates many boosted trees per class (6 classes).
+        Expected. The gap narrows at high d because LIME's own O(N·d) work
+        dominates the total. Expected; matches the T_sample/T_predict breakdown.
+     4. Fidelity plateaus early at a low level. The noise in the surrogate's
+        estimate shrinks as N grows, but a linear 10-feature surrogate has a
+        fixed limit on how well it can fit a non-linear model. More samples
+        can't remove that limit. Expected.
+     5. LR has the lowest fidelity and stability, which seems counter-intuitive
+        for a linear model. Likely reasons:
+        - LIME explains the probability (a non-linear softmax over 6 classes) in
+          a discretised binary space.
+        - LR spreads small weights across many correlated features, so 10
+          features capture little and the top-5 ranking is close to tied, making
+          it unstable.
+        - Tree models concentrate on fewer features.
+        - Plausible, not tested. Optional read-only check below.
+     6. Stability rises with N and falls with d. Monte Carlo noise in the ridge
+        coefficients shrinks roughly with 1/√N. With more features there are
+        more near-tied candidates for the top 5. When N ≤ d the ridge fit is
+        ill-conditioned. Expected.
+     7. XGB is robust to d, and best at d = 300 (non-monotonic). Robustness fits
+        with boosted trees depending on a few dominant features. The d = 300
+        peak doesn't have a clean explanation. It may depend on which features
+        the random subset included, and the ranked-subset check wasn't run in
+        full. Flag it as an open question.
+     8. In-sample R² overstates fidelity. This is ordinary overfitting from
+        selecting and fitting on the same samples. Expected.
+     9. Accuracy doesn't predict explanation quality. Accuracy and how easily
+        the model can be explained locally are different properties. Connect
+        this to the literature on LIME instability.
+
+     Optional evidence check for C5/C7 (read-only, run in scratchpad)
+
+     - Refit the three models with the existing factories in
+       lime_study/config.py and the loader in lime_study/protocol.py.
+     - Report how concentrated each model's importances are: the share of total
+       |coef| or importance held by the top 10 features.
+     - If trees prove much more concentrated than LR, state the explanation with
+       that number. If not, drop it.
+     - Nothing in the repo changes.
+
+     Files
+
+     - Modify: lime_study/notes/results_findings.md (add sections A–C at the top
+       and renumber the rest).
+     - Read only: the lime_study/figures/*.png images, plus config.py and
+       protocol.py for the optional check.
+
+     Verification
+
+     - Check every number in A–C against combined_summary.csv,
+       runtime_scaling.csv, paired_differences.csv and reference_check.csv. Use
+       a quick pandas read-only script in the scratchpad.
+     - Make sure each graph description matches the image once it has been
+       viewed.
+     - Make sure no section quotes or grades the user's earlier notes.
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && grep -nE "^def
+      |^MODEL|^    \"(XGBoost|LogisticRegression|RandomF…)
+  ⎿  (No output)
+
+⏺ Now the optional evidence check. I'll measure how concentrated each model's
+  importances are, and how close the 5th and 6th LIME weights are, which is a
+  direct test of the near-tie explanation.
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && sed -n 90,100p
+      protocol.py && sed -n 205,245p config.py && python…)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && cat >
+      "/private/tmp/claude-503/-Users-ExtraAccount-Documents-college-subject…)  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && PY=python3; [ -x
+      .venv/bin/python ] && PY=.venv/bin/python; PYTHONPATH=. $PY…)
+  ⎿  (No output)
+  ⎿  (timeout 10m)
+
+⏺ The check supports the explanation clearly. Now I'll add the three new
+  sections to the top of the findings file.
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 175 lines
+        8  - Pinned package versions, single-threaded BLAS, all three mod
+           els interleaved in randomised blocks on one machine (8-core Ap
+           ple Silicon Mac)
+        9  - Source tables: `lime_study/figures/combined_summary.csv`, `p
+           aired_differences.csv`, `runtime_scaling.csv`, `reference_chec
+           k.csv`
+       10  
+       11 +Sections A–C are the writing material: the key figures, what e
+          +ach graph shows, and why each result does or doesn't make sens
+          +e. Sections 0–8 below them hold the full tables and details.  
+       12 +                                                              
+       13  ---
+       14  
+       15 +## A. Key figures                                             
+       16 +                                                              
+       17 +**Cost (RQ1)**                                                
+       18 +1. Runtime is **linear in N plus a fixed overhead** (straight-
+          +line fit R² ≥ 0.993 in all 12 model × d settings). 20× more sa
+          +mples costs only **8–10× more time**.                         
+       19 +2. Cost per 1,000 samples rises from **9–17 ms at d = 50** to 
+          +**78–86 ms at d = 500**. 10× more features makes each sample 5
+          +–8× more expensive.                                           
+       20 +3. Speed order is **LR < RF < XGB in all 20 settings**, and al
+          +l differences at N = 5,000 are significant. The XGB/LR gap shr
+          +inks from **1.85× at d = 50** to **1.10× at d = 500**.        
+       21 +4. The most expensive setting (XGB, d = 500, N = 10k) takes **
+          +0.91 s per explanation**. The cheapest (LR, d = 50, N = 500) t
+          +akes **0.011 s**.                                             
+       22 +                                                              
+       23 +**Quality (RQ2)**                                             
+       24 +                                                              
+       25 +5. Held-out fidelity **plateaus by N ≈ 2,500** at a low level:
+          + R² of **0.08–0.30**. Above 2,500 samples it changes by less t
+          +han 0.02.                                                     
+       26 +6. Stability **keeps rising up to 10k samples**. Only XGBoost 
+          +at d ≥ 300 levels off (+0.03 to +0.04 from 5k to 10k).        
+       27 +7. With **N ≤ d** (500 samples, 500 features), explanations ar
+          +e effectively random: Jaccard **0.00–0.03**.                  
+       28 +8. LIME's built-in score overstates fidelity at small N: **0.2
+          +4 in-sample vs 0.07 held-out** (RF, d = 300, N = 500).        
+       29 +                                                              
+       30 +**Model effect (RQ3)**                                        
+       31 +                                                              
+       32 +9. **Stability crossover.** RF is most stable at d ≤ 100 (**0.
+          +80** at d = 50). XGB is most stable at d ≥ 300 (**0.81** at d 
+          += 300, significantly ahead of RF by +0.17 and LR by +0.28).   
+       33 +10. As d goes from 50 to 500 at N = 5,000, stability drops for
+          + RF (**0.80 → 0.60**) and LR (**0.68 → 0.53**), but **not sign
+          +ificantly for XGB**.                                          
+       34 +11. **Diminishing returns.** For XGB at d = 500, each +0.01 of
+          + stability costs **0.006 s** going from 1k to 2.5k samples, bu
+          +t **0.137 s** from 5k to 10k: about **20× more**.             
+       35 +12. The **most accurate model (LR, 95.5%) gives the least stab
+          +le and least faithful explanations.**                         
+       36 +                                                              
+       37 +---                                                           
+       38 +                                                              
+       39 +## B. What the graphs show                                    
+       40 +                                                              
+       41 +### B.1 `lime_overview.png` (main figure)                     
+       42 +                                                              
+       43 +**Layout.** A 3 × 4 grid of small multiples:                  
+       44 +- **Rows:** runtime, held-out R² (fidelity), and top-5 Jaccard
+          + between repeats (stability).                                 
+       45 +- **Columns:** d = 50, 100, 300, 500 perturbed features.      
+       46 +- **x-axis:** LIME samples (N). Blue circles are XGBoost, oran
+          +ge squares Logistic Regression, green triangles Random Forest.
+       47 +- **Shaded bands** are 95% bootstrap confidence intervals over
+          + the 30 cases.                                                
+       48 +- **Hollow markers** are N ≤ d settings, kept out of the lines
+          +.                                                             
+       49 +                                                              
+       50 +**Runtime row.**                                              
+       51 +- Every line is close to a **straight line**, which is linear 
+          +scaling.                                                      
+       52 +- The lines get **steeper from left to right**: the same N cos
+          +ts more at higher d. The y-axis maximum climbs from about 0.18
+          + s (d = 50) to about 0.9 s (d = 500).                         
+       53 +- At d = 50 the three lines are clearly separate, with XGB on 
+          +top. At d = 500 they **almost overlap**.                      
+       54 +- The CI bands are too narrow to see, so runtime is very consi
+          +stent across cases.                                           
+       55 +                                                              
+       56 +**Fidelity row.**                                             
+       57 +- Every curve **rises steeply up to about 2,500 samples and th
+          +en flattens** into a plateau.                                 
+       58 +- The order of the plateaus changes with d:                   
+       59 +  - XGB is highest at d = 50, 300 and 500.                    
+       60 +  - RF is highest at d = 100.                                 
+       61 +  - LR is always lowest, and drops to about 0.09 from d = 100 
+          +onwards.                                                      
+       62 +- XGB's band at d = 50 is very wide (about 0.17–0.43). Only 10
+          + of its 30 cases had enough output variation to score R², so t
+          +he d = 50 ranking is uncertain.                               
+       63 +- At d = 500 the hollow N = 500 markers sit at or below zero. 
+       64 +                                                              
+       65 +**Stability row.**                                            
+       66 +- The curves **keep climbing** to 10k rather than flattening, 
+          +apart from XGB at d = 300 and 500.                            
+       67 +- At d = 50–100, **green (RF) is on top**. At d = 300–500, **b
+          +lue (XGB) is on top**. This is the crossover.                 
+       68 +- Orange (LR) is lowest in almost every panel. Its starting po
+          +int drops sharply with d (0.41 at d = 50 to 0.08 at d = 300). 
+       69 +- At d = 500 the hollow N = 500 markers sit at about zero.    
+       70 +                                                              
+       71 +**Suggested caption:** *LIME runtime (top), held-out surrogate
+          + fidelity (middle) and top-5 stability across repeats (bottom)
+          + against the number of perturbation samples, for each number o
+          +f perturbed features d. Bands show 95% bootstrap CIs over 30 e
+          +xplained instances; hollow markers denote N ≤ d.*             
+       72 +                                                              
+       73 +### B.2 `cost_vs_quality.png` (the trade-off)                 
+       74 +                                                              
+       75 +**How to read it.**                                           
+       76 +- **x-axis:** mean runtime per explanation. **y-axis:** top-5 
+          +Jaccard against the 50,000-sample reference, which measures ho
+          +w close the explanation is to its converged answer.           
+       77 +- Each line is a model. Each point on a line is a sample budge
+          +t, increasing from left to right.                             
+       78 +- **Up and to the left is better**: higher quality for less ti
+          +me.                                                           
+       79 +                                                              
+       80 +**What it shows.**                                            
+       81 +- Every curve **bends over** like a knee: steep at first, then
+          + nearly flat. That shape is diminishing returns, where later p
+          +oints cost a lot more time for little extra quality.          
+       82 +- **At d = 50–100, RF's curve is highest** throughout, so it g
+          +ives the best quality per second.                             
+       83 +- **At d = 300–500, XGB's curve is clearly highest.** It reach
+          +es about 0.85 at d = 300 for under 0.35 s.                    
+       84 +- **LR's curve is lowest** at high d.                         
+       85 +- Moving from left to right, the panels **stretch along the x-
+          +axis**, because the same budgets cost more as d grows.        
+       86 +                                                              
+       87 +**Suggested caption:** *Cost–quality trade-off: agreement with
+          + a 50,000-sample reference explanation against runtime per exp
+          +lanation. Points along each line are sample budgets (500–10,00
+          +0); error bars are 95% bootstrap CIs.*                        
+       88 +                                                              
+       89 +### B.3 Supporting figures (appendix)                         
+       90 +                                                              
+       91 +- **`lime_scaling_grid.png`** replaces the stability row with 
+          +**held-out RMSE**.                                            
+       92 +  - RMSE lines are almost **flat in N**, so more samples barel
+          +y reduce error.                                               
+       93 +  - Their height follows how much each model's output moves lo
+          +cally. XGB is near 0.01 at d = 50, while LR reaches about 0.34
+          + at d = 500.                                                  
+       94 +  - Read the level as an absolute error scale, not as an expla
+          +nation quality ranking.                                       
+       95 +- **`lime_stability_grid.png`** has three rows:               
+       96 +  - Jaccard against the reference. The **dashed lines** mark t
+          +he reference ceiling (how well two 50k references agree with e
+          +ach other), and the grey line marks the 0.667 validity thresho
+          +ld.                                                           
+       97 +  - The same agreement **divided by the ceiling**. At 10k ever
+          +y model reaches about 0.85–0.95 of the ceiling at d = 50–100. 
+          +At d = 300–500 LR stays lower (0.85–0.86).                    
+       98 +  - Repeat stability, the same as in the main figure.         
+       99 +  - All dashed ceilings lie above the grey threshold, so every
+          + reference counts as valid.                                   
+      100 +                                                              
+      101 +---                                                           
+      102 +                                                              
+      103 +## C. Why the results make sense (or don't)                   
+      104 +                                                              
+      105 +Each item gives the finding, the likely mechanism, and how far
+          + it is supported. Items marked *explanation* were not tested d
+          +irectly by the experiment.                                    
+      106 +                                                              
+      107 +**C1. Runtime is linear in N, plus a fixed overhead. Expected.
+          +**                                                            
+      108 +- LIME does the same work for every sample: draw a perturbatio
+          +n, predict it with the model, compute its distance and kernel 
+          +weight.                                                       
+      109 +- The ridge surrogate is fitted once on top of that.          
+      110 +- So cost grows in proportion to N, plus a constant setup cost
+          + per call (building the explainer state and the discretiser lo
+          +okups).                                                       
+      111 +- The fixed overhead is why the log-log exponent comes out bel
+          +ow 1 (0.72–0.77) even though the per-sample cost is constant. 
+      112 +                                                              
+      113 +**C2. Each sample costs more as d grows. Expected.**          
+      114 +- Generating a perturbation, mapping it to and from the discre
+          +tised representation, and computing its distance all touch eve
+          +ry perturbed feature. That work is O(N·d).                    
+      115 +- The measured slope does grow roughly in step with d: 9 → 78 
+          +ms per 1k samples for LR as d goes from 50 to 500.            
+      116 +                                                              
+      117 +**C3. LR is fastest and XGB slowest, but the gap narrows at hi
+          +gh d. Expected.**                                             
+      118 +- Model prediction costs differ:                              
+      119 +  - LR predicts with one matrix multiplication.               
+      120 +  - RF has to pass each sample through 100 trees.             
+      121 +  - XGB evaluates 250 boosting rounds × 6 classes = **1,500 tr
+          +ees**.                                                        
+      122 +- The gap shrinks because LIME's own O(N·d) work (T_sample + T
+          +_weight) grows with d while the prediction cost (T_predict) do
+          +es not. At d = 500 LIME's work dominates, and the models' cost
+          +s converge.                                                   
+      123 +- This matches the cost decomposition T ≈ T_sample + T_predict
+          + + T_weight + T_fit in Section 3.4(a).                        
+      124 +                                                              
+      125 +**C4. Fidelity plateaus early, and at a low level. Expected.**
+      126 +- Two separate things limit fidelity:                         
+      127 +  - **Sampling noise** in the surrogate's coefficients shrinks
+          + as N grows. This produces the early rise.                    
+      128 +  - **Approximation error**: a linear model on 10 binary (disc
+          +retised) features cannot reproduce a non-linear model's behavi
+          +our over a neighbourhood. More samples can't remove this, whic
+          +h produces the plateau.                                       
+      129 +- The plateau height is therefore set by the surrogate's limit
+          +s, not by the sample budget.                                  
+      130 +- Low fidelity in high-dimensional, correlated tabular data is
+          + consistent with known LIME weaknesses. Supporting factors:   
+      131 +  - The default kernel width grows with d, making the neighbou
+          +rhood less local.                                             
+      132 +  - Quartile discretisation discards information.             
+      133 +  - UCI HAR's features are highly correlated, so independent p
+          +erturbation creates unrealistic inputs.                       
+      134 +- These factors are *explanations*; the experiment did not var
+          +y them.                                                       
+      135 +                                                              
+      136 +**C5. LR, a linear model, gets the least faithful and least st
+          +able explanations. Counter-intuitive at first, but explained b
+          +y how spread out its importance is.**                         
+      137 +- One might expect a linear model to be the easiest for a line
+          +ar surrogate to explain. But:                                 
+      138 +  - LIME explains the *predicted probability*, which passes th
+          +rough a non-linear softmax over 6 classes.                    
+      139 +  - It does so in a discretised binary space, not the raw feat
+          +ures.                                                         
+      140 +- More importantly, **LR spreads its importance across many fe
+          +atures**, while the tree models concentrate on a few. Checked 
+          +on the trained models (read-only, not part of the main run):  
+      141 +                                                              
+      142 +| Model | Share of total importance in top 10 of 561 features 
+          +| Features needed for 50% of importance |                     
+      143 +|---|---|---|                                                 
+      144 +| XGBoost | 0.40 | 16 |                                       
+      145 +| Random Forest | 0.26 | 36 |                                 
+      146 +| Logistic Regression | 0.09 | 128 |                          
+      147 +                                                              
+      148 +  - LR's importance is mean |coefficient| across classes on st
+          +andardised features; the tree models use their built-in import
+          +ances. These are different measures, so compare the pattern ra
+          +ther than exact values.                                       
+      149 +- The same pattern appears in the LIME explanations themselves
+          + (N = 5,000):                                                 
+      150 +                                                              
+      151 +| Model | Share of \|weight\| in top 5 of 10 (d = 50 → 500) | 
+          +Median gap between 5th and 6th weight (d = 50 → 500) |        
+      152 +|---|---|---|                                                 
+      153 +| XGBoost | 0.84 → 0.74 | 14% → 10% |                         
+      154 +| Random Forest | 0.74 → 0.61 | 11% → 5% |                    
+      155 +| Logistic Regression | 0.67 → 0.60 | 7% → 6% |               
+      156 +                                                              
+      157 +- When the 5th and 6th features are nearly tied, small samplin
+          +g noise is enough to swap them, so the top-5 set changes betwe
+          +en runs. That is exactly where LR scores lowest.              
+      158 +- A 10-feature surrogate also covers less of a model whose beh
+          +aviour is spread over 128 features, which explains LR's low fi
+          +delity.                                                       
+      159 +                                                              
+      160 +**C6. Stability rises with N and falls with d. Expected.**    
+      161 +- Noise in the surrogate's coefficients shrinks roughly as 1/√
+          +N, so rankings settle down as N grows. That explains why stabi
+          +lity keeps improving slowly rather than jumping to 1.         
+      162 +- Increasing d adds more candidate features competing for the 
+          +top 5, which raises the chance of near-ties. The RF row in the
+          + table above shows this: its 5th/6th gap halves from 11% to 5%
+          + as d grows, matching its stability drop from 0.80 to 0.60.   
+      163 +- When N ≤ d, the ridge fit has fewer samples than features, s
+          +o the feature ranking is mostly noise. This explains the colla
+          +pse to about zero at N = 500, d = 500.                        
+      164 +                                                              
+      165 +**C7. XGBoost is robust to d, and is best at d = 300. Partly e
+          +xplained.**                                                   
+      166 +- **Robustness is explained:** XGB has the most concentrated i
+          +mportance (16 features hold half of it) and keeps the largest 
+          +5th/6th gap at every d (about 10%). Its top features stay clea
+          +rly separated even when many more features are perturbed.     
+      167 +- **The peak at d = 300 is not explained.** It makes stability
+          + non-monotonic in d (0.72 → 0.69 → 0.81 → 0.72).              
+      168 +  - One possible cause is which features the random subset hap
+          +pened to include. The d = 300 subset may contain several of XG
+          +B's dominant features without the extra noise of d = 500.     
+      169 +  - The ranked-subset check that would test this was not run i
+          +n full. Report it as an open question.                        
+      170 +                                                              
+      171 +**C8. LIME's own score overstates fidelity at small N. Expecte
+          +d.**                                                          
+      172 +- `explanation.score` is measured on the same samples used to 
+          +pick the 10 features and fit the surrogate. That is classic ov
+          +erfitting: in-sample error underestimates true error, most whe
+          +n samples are few relative to parameters.                     
+      173 +- The gap closes by N ≈ 5,000, which is the expected behaviour
+          +.                                                             
+      174 +                                                              
+      175 +**C9. Model accuracy doesn't predict explanation quality. Make
+          +s sense.**                                                    
+      176 +- Accuracy measures how well a model separates the classes glo
+          +bally.                                                        
+      177 +- LIME quality depends on how *concentrated* and *locally line
+          +ar* the model's behaviour is around one instance (C5).        
+      178 +- LR is the most accurate model but spreads its decisions acro
+          +ss many features, so it is harder to summarise in 5–10 feature
+          +s.                                                            
+      179 +- Choosing the most accurate model does not guarantee the most
+          + reliable post-hoc explanations.                              
+      180 +                                                              
+      181 +**C10. Fidelity and stability saturate at different points. Ma
+          +kes sense.**                                                  
+      182 +- Fidelity is limited by the surrogate's approximation error (
+          +C4), which more samples can't fix, so it plateaus early.      
+      183 +- Stability is limited by sampling noise (C6), which keeps shr
+          +inking with N, so it keeps improving, but ever more slowly per
+          + second spent.                                                
+      184 +- In practice, extra samples beyond about 2,500 buy **consiste
+          +ncy between runs**, not a **more faithful** explanation.      
+      185 +                                                              
+      186 +---                                                           
+      187 +                                                              
+      188  ## 0. Experimental setup (as run)
+      189  
+      190  | Setting | Value (`lime_study/config.py`) |
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+       94    - Read the level as an absolute error scale, not as an expla
+           nation quality ranking.
+       95  - **`lime_stability_grid.png`** has three rows:
+       96    - Jaccard against the reference. The **dashed lines** mark t
+           he reference ceiling (how well two 50k references agree with e
+           ach other), and the grey line marks the 0.667 validity thresho
+           ld.
+       97 -  - The same agreement **divided by the ceiling**. At 10k ever
+          -y model reaches about 0.85–0.95 of the ceiling at d = 50–100. 
+          -At d = 300–500 LR stays lower (0.85–0.86).                    
+       97 +  - The same agreement **divided by the ceiling**. At 10k ever
+          +y model reaches 0.90–0.95 of the ceiling at d = 50–100. At d =
+          + 300–500 LR stays lower (0.85–0.86).                          
+       98    - Repeat stability, the same as in the main figure.
+       99    - All dashed ceilings lie above the grey threshold, so every
+            reference counts as valid.
+      100  
+
+⏺ Your writing material is now at the top of results_findings.md
+  (lime_study/notes/results_findings.md), as bullet points rather than prose.
+  The detailed tables you already had are unchanged underneath.
+
+  - A. Key figures: 12 headline numbers grouped by your three research questions
+    (cost, quality, model effect).
+  - B. What the graphs show: a panel-by-panel description of the main overview
+    figure and the cost-vs-quality plot, with a suggested caption for each.
+    There are also short notes on the two supporting figures for the appendix. I
+    looked at all four images so the descriptions match what's actually drawn.
+  - C. Why the results make sense (or don't): 10 findings, each with its likely
+    mechanism and how well it's supported. Anything the experiment didn't test
+    directly is labelled as an explanation.
+
+  New evidence. I added one check that wasn't in the main run. It explains the
+  most surprising result: Logistic Regression is the most accurate model but
+  gets the least stable and least faithful LIME explanations. I retrained the
+  three models with the repo's own settings and looked at how spread out each
+  model's feature importance is. Nothing in the repo was changed.
+
+  ┌────────────────┬─────────────────────────────┬─────────────────────────┐
+  │     Model      │ Features holding half the   │ Gap between LIME's 5th  │
+  │                │     model's importance      │    and 6th features     │
+  ├────────────────┼─────────────────────────────┼─────────────────────────┤
+  │ XGBoost        │ 16                          │ ~10%                    │
+  ├────────────────┼─────────────────────────────┼─────────────────────────┤
+  │ Random Forest  │ 36                          │ 11% → 5% as d grows     │
+  ├────────────────┼─────────────────────────────┼─────────────────────────┤
+  │ Logistic       │ 128                         │ ~6%                     │
+  │ Regression     │                             │                         │
+  └────────────────┴─────────────────────────────┴─────────────────────────┘
+
+  When the 5th and 6th features are nearly tied, small sampling noise is enough
+  to swap them, so the top-5 set changes between runs. That accounts for:
+  - Logistic Regression being the least stable model
+  - Random Forest's stability dropping as d grows, because its gap halves
+  - XGBoost staying stable at every d, because its gap stays the largest
+
+  The two importance measures aren't identical, so compare the pattern rather
+  than exact values.
+
+  Still unexplained. XGBoost is most stable at 300 features, not at the smallest
+  d (stability goes 0.72 → 0.69 → 0.81 → 0.72 as d increases). Section C7 marks
+  this as an open question.
+
+❯ in need to fit this in half a page or less, can you write another paragraph
+  with main points that fits this
+
+⏺ Written for: readers of your paper. This is about 270 words, sized for half a
+  page.
+
+  ▎ Results and Analysis. LIME's runtime grew linearly with the number of
+  ▎ perturbation samples N, plus a fixed per-explanation overhead (R² ≥ 0.993).
+  ▎ A 20-fold increase in N therefore cost only 8–10 times more time. Each
+  ▎ sample became more expensive as dimensionality grew, from 9–17 ms per 1,000
+  ▎ samples at d = 50 to 78–86 ms at d = 500, because sampling and distance
+  ▎ computation scale with N·d. Logistic Regression was fastest and XGBoost
+  ▎ slowest in every setting. The gap between models shrank from 1.85× at d = 50
+  ▎ to 1.10× at d = 500, since LIME's own computation, rather than model
+  ▎ inference, dominates at high d. Held-out fidelity plateaued by N ≈ 2,500 at
+  ▎ a low level (R² = 0.08–0.30). This suggests a ceiling set by the linear
+  ▎ surrogate rather than the sample budget. Stability, by contrast, kept
+  ▎ improving up to 10,000 samples but with diminishing returns: for XGBoost at
+  ▎ d = 500, each unit of stability cost about 20 times more between 5,000 and
+  ▎ 10,000 samples than between 1,000 and 2,500. When N ≤ d, explanations were
+  ▎ effectively random (Jaccard ≤ 0.03). The model affected quality more than
+  ▎ cost. Random Forest was most stable at low dimensionality (0.80 at d = 50),
+  ▎ while XGBoost was most stable at high dimensionality (0.81 at d = 300) and
+  ▎ was the only model whose stability did not decline significantly with d.
+  ▎ Logistic Regression, despite the highest accuracy (95.5%), produced the
+  ▎ least stable and least faithful explanations. Its importance is spread
+  ▎ across many features (128 features account for half of it, against 16 for
+  ▎ XGBoost), leaving near-ties that sampling noise can easily reorder.
+
+  To make it shorter, cut the runtime-gap sentence and the N ≤ d sentence first.
+  They're the least central to your cost/quality question.
+
+❯ is this actually verified?:Its importance is spread across many features (128
+  features account for half of it, against 16 for XGBoost), leaving near-ties
+  that sampling noise can easily reorder.
+
+  and this is the conclusion section, however, it feels more like the results
+  and analysis section i was supposed to do, and doesn't feel like its actually
+  answering the question the paper is set out to do, can you critique it:
+  Conclusion & Limitations
+
+  5.1 Conclusion
+
+  Throughout this study, we examined three main themes: computational cost,
+  explanation quality, and model-dependent trade-offs, addressed through three
+  research questions. Firstly, runtime increased with both perturbation sample
+  size (N) and feature dimensionality (d), with Logistic Regression
+  consistently the fastest, followed by Random Forest and XGBoost. Secondly,
+  increasing N generally improved explanation fidelity and stability, although
+  these improvements diminished at higher sample counts, while increasing
+  dimensionality often reduced explanation consistency. Thirdly, the underlying
+  model significantly influenced the cost-quality trade-off. Our experiments
+  showed that XGBoost achieved the highest mean held-out fidelity (R²) and
+  explanation stability at 300–500 features, while Random Forest produced lower
+  absolute surrogate error (RMSE) at these dimensions. Logistic Regression
+  offered the lowest computational cost but generally weaker explanation
+  quality. Overall, XGBoost demonstrated the strongest quality-focused
+  performance in our higher-dimensional experiments, although no single model
+  consistently outperformed the others across all metrics.
+
+  5.2 Limitations
+
+  Several limitations affected the scope of this study. TabFM was excluded due
+  to its computational demands, with predictions alone estimated to require
+  approximately ~34 hours. The original Covertype dataset was replaced because
+  its 54 features were insufficient for our intended high-dimensional analysis.
+  Spearman correlation was removed because its model-dependent chance levels
+  complicated stability comparisons, leaving top-five Jaccard as our
+  repeatability measure. Furthermore, the study was restricted to one dataset,
+  UCI HAR, and 30 explained instances. The dataset's highly correlated sensor
+  features may also produce unrealistic LIME perturbations. These factors limit
+  the generalisability of our findings to other datasets, models, and
+  experimental configurations.
+
+⏺ Is that sentence verified?
+
+  Partly.
+
+  - The numbers are verified. I measured them myself: on the trained models,
+    half of Logistic Regression's importance is spread over 128 features,
+    against 16 for XGBoost. LIME's 5th and 6th features are also closer together
+    for LR (about a 6% gap) than for XGBoost (about 10%).
+  - "Leaving near-ties that sampling noise can easily reorder" is an
+    explanation, not a tested result. The near-ties and the low stability occur
+    together, but the experiment never showed that one causes the other.
+  - The two models use different importance measures. LR's is the average size
+    of its coefficients and XGBoost's is its built-in tree importance, so the
+    128 vs 16 comparison shows a pattern, not an exact like-for-like figure.
+  - The check isn't in your Methodology. I ran it afterwards, on models
+    retrained with the same settings. If you cite it, add one line to Methods
+    saying so.
+
+  Safer wording:
+
+  ▎ "Its importance is more evenly spread across features (half is held by 128
+  ▎ features, against 16 for XGBoost), which may leave near-tied features that
+  ▎ sampling noise can reorder."
+
+  Critique of the Conclusion
+
+  1. It's a results summary, not a conclusion. Your introduction promises to
+  "identify where additional computations stop improving explanation quality",
+  and the conclusion never gives that answer. The answer the data supports:
+  - Fidelity stops improving at about 2,500 samples.
+  - Stability keeps improving up to 10,000 samples, but each gain costs more
+    (about 20× by the end).
+  - LIME's default of 5,000 is therefore past the point where fidelity improves,
+    but not where stability stops improving.
+  - N must clearly exceed d. At N ≤ d, explanations are effectively random.
+
+  This should be the first sentence or two of the conclusion.
+
+  2. The RMSE claim is misleading. "Random Forest produced lower absolute
+  surrogate error (RMSE)" is true numerically. But RMSE mostly reflects how much
+  each model's output moves locally, and RF's output barely moves at those
+  dimensions (local output spread about 0.06–0.07, against 0.20–0.26 for
+  XGBoost). It doesn't mean RF's explanations are better. Drop this point or add
+  that context.
+
+  3. One key insight is missing: the model matters for quality, much less for
+  cost.
+  - Runtime is driven by N and d.
+  - At d = 500 the models are within about 10% of each other, so "LR offered the
+    lowest computational cost" is a weak selling point at high dimensionality.
+  - The real model effect is on quality: XGBoost's stability holds up as d
+    grows, while RF's and LR's falls.
+
+  4. A few claims need tightening.
+  - "Significantly influenced": only use "significantly" where you tested it.
+    - XGBoost's stability lead is statistically significant only at d = 300.
+    - Its fidelity lead is significant at 300 and 500.
+  - "Increasing dimensionality often reduced explanation consistency": say which
+    models. It applies to RF and LR, not XGBoost.
+
+  5. Interesting findings that are absent:
+  - The most accurate model gave the weakest explanations. This has a practical
+    lesson for anyone using LIME.
+  - LIME's own score overstates fidelity at small sample sizes (0.24 vs 0.07).
+    This is a practical warning for anyone relying on explanation.score.
+
+  6. There's no practical takeaway or future work. A conclusion usually ends
+  with what a practitioner should do and what to study next. Practical
+  takeaways:
+  - Use at least about 2,500 samples, and well above d.
+  - Go higher only if run-to-run consistency matters.
+  - Check stability rather than trusting LIME's own score.
+
+  Future work: the sensitivity checks that weren't fully run, more datasets, and
+  models such as TabFM.
+
+  Critique of the Limitations
+
+  It's mostly project history, not threats to validity.
+  - TabFM, Covertype and Spearman are design decisions.
+  - They fit better in the Methodology, or should be cut down to a clause.
+  - A limitations section should say what could make the findings wrong or less
+    general.
+  - Check the "~34 hours" figure before you keep it. I couldn't find it in the
+    results, and "approximately ~" says the same thing twice.
+
+  Missing limitations that matter more:
+  - One machine. Absolute runtimes won't transfer to other hardware, though the
+    scaling trends should.
+  - Feature subsets were chosen at random, and LIME's default kernel width
+    changes with d. Both vary with dimensionality, so part of the effect
+    attributed to d could come from them. The checks for this were not run in
+    full.
+  - The 30 instances come from only 9 participants, which widens the
+    uncertainty.
+  - Absolute fidelity was low (R² ≤ 0.30) for every model, so even "good"
+    explanations capture limited local behaviour.
+  - XGBoost's unexplained stability peak at d = 300.
+  - Only default LIME settings were tested, including quartile discretisation
+    and the ridge surrogate.
+
+  Suggested structure for 5.1 (about 150–200 words)
+
+  1. The direct answer to the paper's purpose: where extra samples stop paying
+     off (point 1 above).
+  2. RQ1 in one sentence: runtime is linear in N plus a fixed overhead, and is
+     driven by N and d more than by the model.
+  3. RQ2 in one sentence: fidelity plateaus early at a low level, while
+     stability keeps rising but with diminishing returns, and falls with d for
+     RF and LR.
+  4. RQ3 in one sentence: the model shapes quality more than cost. RF is best at
+     low d, XGBoost at high d, and LR is weakest despite the highest accuracy.
+  5. The practical recommendation, plus one line of future work.
+
+❯ "N must clearly exceed d. At N ≤ d, explanations are effectively random." i
+  don't think we tested this right?
+
+⏺ You're right, it wasn't tested as such. Only one setting in the experiment has
+  N ≤ d: N = 500 with d = 500, where N equals d exactly. Every other
+  combination has N > d.
+
+  What the data actually shows:
+  - At N = d = 500, top-5 stability was 0.00–0.03 across the three models, and
+    agreement with the reference was 0.02–0.05. Those values are close to random
+    for that one setting.
+  - No setting had N < d, so we can't say what happens below that line.
+  - "Clearly exceed" has no tested threshold behind it. Results are still weak
+    just above N = d:
+    - At N = 500, d = 300 (N ≈ 1.7d), stability was 0.08–0.29.
+    - At N = 1,000, d = 500 (N = 2d), it was 0.18–0.43.
+    - So stability rises gradually with the N-to-d ratio, with no cut-off. "N
+      must clearly exceed d" turns one data point into a rule.
+  - The flag was set before the run, not tested. The study marks N ≤ d as a "low
+    sample-to-feature ratio" setting and keeps it out of the trend lines. That
+    makes it a design decision rather than a hypothesis the study set out to
+    test.
+
+  A version you can support:
+
+  ▎ "In the one configuration where the sample budget equalled the number of
+  ▎ perturbed features (N = d = 500), explanations were effectively random
+  ▎ (top-5 Jaccard ≤ 0.03), and stability remained low until N was several times
+  ▎ larger than d."
+
+  The same overstatement appears in a few places I wrote earlier. In the
+  half-page paragraph I gave you, "When N ≤ d, explanations were effectively
+  random (Jaccard ≤ 0.03)" should be replaced with the sentence above. The
+  findings file says the same thing in a few places (point 7, the "lower bound
+  on N" in section 6, and C6). I haven't edited the file because you've changed
+  it since; I can update those spots if you want.
+
+❯ can you critique the conclusion more, here is also the more updated draft
+  paper:
+  Explainable AI: LIME Cost/Quality Scaling on High-Dimensional Tabular Data
+  across multiple different models
+
+  By Caitlin Amelia Moloney (24411086), David Moore (24419095), Hugh Murtagh
+  (24421448), Sebastian Kimmel (24420336)
+
+  Abstract
+
+  Introduction
+
+  LIME is a popularly used model-agnostic explainability method for black box
+  models. The runtime of LIME depends on the number of perturbation samples and
+  inference cost of the black-box model to which it is being applied, while
+  the quality of explanations degrades as feature space grows.
+
+  Studies have examined LIME's instability and proposed variations upon LIME,
+  but there is a lack of guidance on how cost and quality might scale together
+  as dimensionality and model complexity increase.
+
+  This paper's purpose is to investigate LIME cost/quality scaling across
+  multiple models on large tabular datasets, measuring runtime against
+  stability and fidelity to identify where additional computations stop
+  improving explanation quality.
+
+  Background/Related Work
+
+  2.0 Why haven’t LIME computational costs been studied?
+
+  Theme 1: LIME is expensive, but nobody has measured that systematically on
+  tabular data.
+
+  Theme 2: More samples make LIME more stable, but cost more. Only
+  qualitatively, or for one model.
+
+  Theme 3: Tabular LIME has been evaluated, but not for cost.
+
+
+
+  2.1 How to create an unbiased research-based experiment?
+
+  Sample sizes – justify each
+
+  Dataset
+
+  Models
+
+  50, 100, 300, 500 – number of features we examine it at w
+
+  Controls – fixed seeds
+
+
+
+  Methodology
+
+  3.0 Study Design
+
+  This is a controlled computational experiment characterizing how the cost and
+  quality of LIME scale with the number of perturbation samples (N) and the
+  number of perturbed features (d). A full factorial design is used: 3 models x
+  4 values of d x 5 values of N x 5 repeats, applied to each of 30 explained
+  cases. This gives 9,000 timed explanations (3,000 per model), 18,000 repeat
+  pairs for stability measurement (6,000 per model), and 720 reference
+  explanations at N = 50,000 (240 per model).
+
+  The three research questions this experiment aims to address are:
+
+  How does runtime scale with N and d per explanation?
+
+  How does explanation quality change with N and d?
+
+  How does the black-box model change cost/quality trade-offs?
+
+  The unit of analysis is 30 explained instances. Repeats are averaged within a
+  case before any statistic across cases is com
+  ──── (86 lines hidden) ──────────────────────────────────────────────────────
+  d = 50), while XGBoost was most stable at high dimensionality (0.81 at d =
+  300) and was the only model whose stability did not decline significantly
+  with d. Logistic Regression, despite the highest accuracy (95.5%), produced
+  the least stable and least faithful explanations. Its importance is more
+  evenly spread across features (half is held by 128 features, against 16 for
+  XGBoost), which may leave near-tied features that sampling noise can reorder.
+
+
+  Conclusion & Limitations
+
+  5.1 Conclusion
+
+  Throughout this study, we examined three main themes: computational cost,
+  explanation quality, and model-dependent trade-offs, addressed through three
+  research questions. Firstly, runtime increased with both perturbation sample
+  size (N) and feature dimensionality (d), with Logistic Regression
+  consistently the fastest, followed by Random Forest and XGBoost. Secondly,
+  increasing N generally improved explanation fidelity and stability, although
+  these improvements diminished at higher sample counts, while increasing
+  dimensionality often reduced explanation consistency. Thirdly, the underlying
+  model significantly influenced the cost-quality trade-off. Our experiments
+  showed that XGBoost achieved the highest mean held-out fidelity (R²) and
+  explanation stability at 300–500 features, while Random Forest produced lower
+  absolute surrogate error (RMSE) at these dimensions. Logistic Regression
+  offered the lowest computational cost but generally weaker explanation
+  quality. Overall, XGBoost demonstrated the strongest quality-focused
+  performance in our higher-dimensional experiments, although no single model
+  consistently outperformed the others across all metrics.
+
+  5.2 Limitations
+
+  Several limitations affected the scope of this study. TabFM was excluded due
+  to its computational demands, with predictions alone estimated to require
+  approximately ~34 hours. The original Covertype dataset was replaced because
+  its 54 features were insufficient for our intended high-dimensional analysis.
+  Spearman correlation was removed because its model-dependent chance levels
+  complicated stability comparisons, leaving top-five Jaccard as our
+  repeatability measure. Furthermore, the study was restricted to one dataset,
+  UCI HAR, and 30 explained instances. The dataset's highly correlated sensor
+  features may also produce unrealistic LIME perturbations. These factors limit
+  the generalisability of our findings to other datasets, models, and
+  experimental configurations.
+
+
+
+
+
+
+
+
+
+
+
+  a
+
+
+
+
+
+  References
+
+⏺ The main problem hasn't changed: the conclusion doesn't answer the question
+  the paper asks. Seeing the full draft shows a few more issues, mostly where
+  the conclusion doesn't match your Methods and Results.
+
+  1. It doesn't answer the paper's question
+
+  The introduction sets the goal: "identify where additional computations stop
+  improving explanation quality." The conclusion never names that point. It only
+  says improvements "diminished at higher sample counts", which is vaguer than
+  your own Results paragraph. Your data does give an answer, and it should be
+  the conclusion's opening:
+  - Fidelity stops improving at about 2,500 samples.
+  - Stability keeps improving up to 10,000, but gets steadily more expensive
+    (about 20× more per unit of stability by the end).
+  - LIME's default of 5,000 sits between those two points.
+
+  The introduction also claims that "the quality of explanations degrades as
+  feature space grows." The conclusion should confirm or qualify this. Your
+  results qualify it: quality degraded for RF and LR, but not for XGBoost.
+  That's one of your more interesting findings, and the conclusion leaves it
+  out.
+
+  2. It repeats the Results, but less precisely
+
+  Almost every sentence restates the Results paragraph with the numbers removed
+  and hedges added ("generally", "often"). A reader learns nothing new and gets
+  less detail. A conclusion should interpret: what the findings mean, why they
+  matter, and what someone using LIME should do differently. It shouldn't
+  re-list them. The opening sentence ("Throughout this study, we examined three
+  main themes…") is filler and can go.
+
+  3. It introduces results that aren't in the Results section
+
+  - XGBoost having the highest held-out fidelity at 300–500 features never
+    appears in your Results paragraph. Results only discusses fidelity in
+    general terms.
+  - RF having lower RMSE also doesn't appear in Results, and it's misleading.
+    RMSE mostly reflects how much each model's output moves locally, not how
+    good the explanation is.
+
+  New findings shouldn't first appear in the conclusion. Move the fidelity point
+  into Results and drop the RMSE point.
+
+  4. It ignores one of your three quality metrics
+
+  Section 3.4 defines convergence (agreement with the 50,000-sample references),
+  but neither Results nor Conclusion reports it. Either report it or drop it
+  from Methods. It's directly relevant to your question: reaching about 90% of
+  the reference agreement generally took 10,000 samples, and LR and RF at d ≥
+  300 never got there.
+
+  5. Claims that are overstated or unsupported
+
+  - "Significantly influenced": section 3.6 (Statistical Analysis) is empty, so
+    the paper doesn't yet describe any significance tests.
+    - Fill in 3.6 (bootstrap CIs, paired sign-flip tests, Holm correction) or
+      avoid the word.
+    - The tests support significance clearly for runtime. For XGBoost's
+      stability lead, they support it only at d = 300.
+  - "LR offered the lowest computational cost": true, but your own Results show
+    the gap is only about 10% at d = 500. The real point is that cost is driven
+    by N and d, while the model mainly affects quality. Results says this ("the
+    model affected quality more than cost"), but the conclusion drops it.
+  - "Increasing dimensionality often reduced explanation consistency": say which
+    models. This applied to RF and LR, not XGBoost.
+
+  6. No implications or future work
+
+  The conclusion ends without telling the reader what to do. Two or three
+  sentences would round it off:
+  - Guidance: use around 2,500 samples or more if fidelity is the goal. Go
+    higher only if run-to-run consistency matters. Check stability directly
+    instead of trusting LIME's own score.
+  - Model choice: the most accurate model (LR) gave the weakest explanations, so
+    choosing a model for accuracy doesn't guarantee reliable LIME explanations.
+  - Future work:
+    - fixed kernel width and ranked feature subsets
+    - more datasets
+    - excluded models such as TabFM
+    - measuring each stage of the cost equation separately
+
+  7. Limitations: replace project history with threats to validity
+
+  TabFM, Covertype and Spearman explain why the design changed. That belongs in
+  Methods, or can shrink to one clause. Your Methods section itself raises
+  limitations that matter more:
+  - Hyperparameters were not tuned or matched (3.2), so the comparisons are
+    between these particular model configurations, not between model families in
+    general.
+  - Models are trained on all 561 features while LIME perturbs only d (3.3).
+    "Dimensionality" here means perturbed dimensionality, not model input size.
+  - The kernel width (0.75√d) and the random feature subset both change with d,
+    so part of the "effect of d" may come from them.
+  - The cost equation is conceptual (3.4a). Individual stages weren't timed, so
+    "LIME's own computation dominates at high d" is an inference, not a
+    measurement.
+  - The cases are class-balanced (3.1), which differs from the test-set
+    distribution.
+  - One machine. Absolute runtimes won't transfer to other hardware, though the
+    scaling trends should.
+  - Only one setting had N ≤ d (N = d = 500). That's why the Results sentence
+    below needs changing.
+
+  8. Fixes elsewhere in the draft
+
+  - Results: "When N ≤ d, explanations were effectively random" still
+    overgeneralises from one setting. Replace it with: "In the one configuration
+    where N equalled d (N = d = 500), explanations were effectively random
+    (top-5 Jaccard ≤ 0.03)."
+  - 3.4(a): "where the four models will differ most" should say three.
+  - Duplicate section numbers: there are two 3.3s and two 3.4(a)s. The second
+    3.4(a) should probably be 3.4(b).
+  - 3.5: has a leftover "– why" note.
+  - 5.2: "approximately ~34 hours" says the same thing twice. Check the 34-hour
+    figure too, since I couldn't find it in the results.
+
+  Suggested shape for 5.1 (about 150 words)
+
+  1. Answer the purpose: where extra samples stop paying off, for fidelity and
+     for stability.
+  2. Cost: driven by N and d, linear in N plus a fixed overhead. The model
+     matters little at high d.
+  3. Quality and model: degradation with d depends on the model. XGBoost held up
+     while RF and LR declined, and LR was weakest despite being most accurate.
+  4. Implication: practical guidance on sample budgets, plus one line of future
+     work.
+
+❯ regarding the results and analysis section, i got the following feedback:
+  I checked the Results/Analysis paragraph against the saved run tables. Most
+  reported values are correct, but several interpretations need tightening
+  before publication.
+  - Runtime: The near-linear fit is supported (the lowest fitted \(R^2\) is
+  0.993). The 500 to 10,000 sample increase took 7.9–10.3× as long across
+  settings, so “8–10×” is a reasonable approximation. The shrinking
+  XGBoost–Logistic Regression gap is real; attributing it to LIME’s internal
+  work is a hypothesis because the stages were not timed separately. [Runtime
+  data](/Users/ExtraAccount/Documents/college subjects/block_10/xAI/xAI_Project
+  /XAI/lime_study/figures/combined_summary.csv)
+  - Fidelity: Held-out \(R^2\) changes little beyond 2,500–5,000 samples within
+  the tested range. That does not establish a ceiling caused by the linear
+  surrogate; the study did not isolate surrogate capacity from feature
+  selection, discretisation, or kernel width. Also, \(R^2\) excludes “flat”
+  cases—for example, 20 of 30 XGBoost cases at \(d=50\)—so cross-model fidelity
+  comparisons need that qualification. [Study protocol
+  (line 60)](/Users/ExtraAccount/Documents/college
+  subjects/block_10/xAI/xAI_Project/XAI/lime_study/README.md:60)
+  - Stability: RF is highest at \(d=50\) and XGBoost at \(d=300\), but call
+  this a descriptive crossover. XGBoost’s lead over both other models is
+  statistically supported at \(d=300\); its lead over RF at \(d=500\) is not.
+  “XGBoost was the only model whose stability did not decline significantly
+  with \(d\)” is incorrect: the corrected \(d=50\) versus \(d=500\) test for
+  Logistic Regression is also nonsignificant (\(p=0.086\)). A nonsignificant
+  result does not establish no decline. [Paired
+  comparisons](/Users/ExtraAccount/Documents/college subjects/block_10/xAI/xAI_
+  Project/XAI/lime_study/figures/paired_differences.csv), [dimension
+  comparisons](/Users/ExtraAccount/Documents/college
+  subjects/block_10/xAI/xAI_Project/XAI/lime_study/figures/reference_check.csv)
+  - Low sample ratio: At the one tested \(N\leq d\) setting (\(N=d=500\)),
+  repeat Jaccard is 0.004–0.029. Say “very low repeat agreement”, not
+  “effectively random”: no random-selection baseline was tested, and one
+  setting cannot establish a general \(N>d\) threshold.
+  - Unsupported explanation: I could not trace “half [of LR importance] is held
+  by 128 features, against 16 for XGBoost” to the saved results or analysis
+  code. Remove it unless you can provide a defined importance calculation.
+  Likewise, “the model affected quality more than cost” needs a specified
+  comparison measure.
+    The paragraph would be stronger if it reported reference agreement
+  alongside repeat stability: at \(N=5{,}000,d=300\), XGBoost’s top-five
+  agreement with the 50,000-sample references is 0.855, versus 0.692 for RF and
+  0.609 for LR. Those XGBoost differences survive the study’s primary Holm
+  correction. This directly supports the paper’s cost–quality question.
+
+⏺ The feedback is right on almost every point, and most of the errors were mine:
+  I wrote that paragraph. I checked each point against the saved tables.
+
+  What holds up
+
+  Point: Runtime (7.9–10.3×; the gap explanation is a hypothesis)
+  Verdict: Correct. The stages were never timed separately, so "LIME's own work
+  dominates" has to be presented as a likely reason.
+  ────────────────────────────────────────
+  Point: Fidelity "ceiling" not established; flat cases excluded
+  Verdict: Correct. The study didn't separate the surrogate's limits from
+  discretisation, kernel width or feature selection.
+  ────────────────────────────────────────
+  Point: Stability crossover is descriptive only
+  Verdict: Correct. XGBoost's lead over RF at d = 500 isn't significant after
+  Holm correction (p = 1.0).
+  ────────────────────────────────────────
+  Point: "Only model whose stability did not decline significantly"
+  Verdict: Partly correct. LR's d = 50 vs 500 drop isn't significant (p =
+  0.086).
+  But LR's d = 50 vs 300 drop is significant (p = 0.010), so LR did decline
+  significantly at one point. XGBoost had no significant drop between any pair
+  of d values. The claim is defensible only if worded as "no significant
+  decline was detected for XGBoost".
+  ────────────────────────────────────────
+  Point: N = d = 500: "very low agreement", not "random"
+  Verdict: Correct. Values were 0.004–0.029, and no random baseline was tested.
+  ────────────────────────────────────────
+  Point: The 128 vs 16 importance figure
+  Verdict: Correct that it isn't traceable. I computed it in a throwaway script,
+
+  not in the repo's analysis code. For a 3-page paper, remove it.
+  ────────────────────────────────────────
+  Point: "Quality more than cost" needs a measure
+  Verdict: Fair. A concrete comparison exists: at N = 5,000 and d = 500,
+  runtimes
+  differ by under 10% across models, while reference agreement ranges from 0.61
+   to 0.76.
+  ────────────────────────────────────────
+  Point: Add reference agreement (0.855 / 0.692 / 0.609)
+  Verdict: Correct, and XGBoost's lead survives the primary Holm correction (p =
+
+  0.004 against both models).
+
+  Revised paragraph (about 330 words)
+
+  ▎ LIME's runtime grew almost linearly with the number of perturbation samples
+  ▎ N, with a fixed per-explanation overhead (straight-line fits, R² ≥ 0.993).
+  ▎ Increasing N from 500 to 10,000 raised runtime 7.9–10.3-fold. The cost of
+  ▎ each sample grew with the number of perturbed features, from 9–17 ms per
+  ▎ 1,000 samples at d = 50 to 78–86 ms at d = 500. Logistic Regression was
+  ▎ fastest and XGBoost slowest in every setting. However, the gap narrowed from
+  ▎ 1.85× at d = 50 to 1.10× at d = 500 (N = 10,000), plausibly because LIME's
+  ▎ own sampling and weighting, which scale with N·d, outweigh model inference
+  ▎ at high d; individual stages were not timed. Held-out fidelity changed
+  ▎ little beyond 2,500–5,000 samples and remained low (R² = 0.08–0.30), so
+  ▎ within the tested range additional samples did not make the surrogate more
+  ▎ faithful. R² excludes cases whose output barely varied, including 20 of 30
+  ▎ XGBoost cases at d = 50. Explanation agreement, by contrast, kept improving
+  ▎ up to 10,000 samples at a rising cost. For XGBoost at d = 500, each 0.01
+  ▎ gain in repeat Jaccard cost 0.006 s between 1,000 and 2,500 samples, but
+  ▎ 0.137 s between 5,000 and 10,000. At the one setting where N equalled d (N =
+  ▎ d = 500), repeat agreement was very low (Jaccard 0.004–0.029). Model choice
+  ▎ mattered more for quality than for cost. At N = 5,000 and d = 500, runtimes
+  ▎ differed by under 10% across models, whereas agreement with the
+  ▎ 50,000-sample reference ranged from 0.61 to 0.76. Random Forest was the most
+  ▎ stable model at d = 50 (0.80) and XGBoost at d = 300 (0.81). At d = 300,
+  ▎ XGBoost's agreement with the reference (0.855) exceeded that of Random
+  ▎ Forest (0.692) and Logistic Regression (0.609), and these differences
+  ▎ survive Holm correction. Stability declined significantly with d for Random
+  ▎ Forest and for Logistic Regression (d = 50 vs 300); no significant decline
+  ▎ was detected for XGBoost. Logistic Regression, despite the highest test
+  ▎ accuracy (95.5%), produced the least faithful explanations at every d and
+  ▎ the least stable at N = 5,000.
+
+  If it runs over half a page, cut the sentence about R² excluding cases and the
+  runtime-gap explanation first. Keep the reference-agreement sentence, because
+  it most directly answers your cost/quality question.
+
+  Three claims I made earlier are wrong in the same way the paragraph was:
+  "effectively random", the 128/16 importance figure, and "only model that
+  didn't decline". They still appear in results_findings.md and in my conclusion
+  critique. I can correct the findings file if you want.
+
+❯ correct them
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study/notes" && grep -nE
+      "random|128|16 features|concentrat|near-tie|5th|ce…)
+  ⎿  (No output)
+
+⏺ The file has changed since my last edit: sections A–C are gone, and some older
+  wording is back. I'll read the current version before correcting it.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ The file reverted to an older version with the ✅/❌ markers back and sections
+  A–C missing, so the 128 vs 16 importance claim isn't present here. I'll fix
+  the overclaims that remain, including another one I spotted: XGBoost's
+  fidelity lead over RF at d = 300 also isn't significant.
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 2 lines, removed 2 lines
+      76  **The gap between models shrinks as d grows.**
+      77  - At d = 50, N = 10k, XGB takes 0.183 s against 0.099 s for LR,
+           about **1.85×** slower.
+      78  - At d = 500, N = 10k, XGB takes 0.909 s against 0.827 s for LR
+          , only about **1.10×** slower.
+      79 -- Likely reason: at high d, LIME's own work dominates the total
+         - time. Generating perturbations (T_sample) and computing distan
+         -ces and kernel weights (T_weight) both scale with N·d, so the b
+         -lack-box prediction step (T_predict), where the models differ, 
+         -becomes a small share. This ties the results back to the cost d
+         -ecomposition in Section 3.4(a).                                
+      80 -- XGBoost has the smallest exponent for d (0.66) but the larges
+         -t overhead at small d, so its inference cost is what makes it t
+         -he slowest model.                                              
+      79 +- Possible reason (a hypothesis, because the individual stages 
+         +were not timed): at high d, LIME's own work may dominate the to
+         +tal time. Generating perturbations (T_sample) and computing dis
+         +tances and kernel weights (T_weight) both scale with N·d, so th
+         +e black-box prediction step (T_predict), where the models diffe
+         +r, would become a small share. This is consistent with the conc
+         +eptual cost decomposition in Section 3.4(a), but doesn't test i
+         +t.                                                             
+      80 +- XGBoost has the smallest exponent for d (0.66) but the larges
+         +t overhead at small d. This fits with model inference being wha
+         +t makes it slowest, but that too is an inference, not a measure
+         +ment.                                                          
+      81  
+      82  **Measurement check.** Speed probes taken throughout the run st
+          ayed within ±4% of the median, with a single +10% spike (`machi
+          ne_drift.csv`), so drift did not bias the comparisons.
+      83  
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 2 lines, removed 1 line
+       97  
+       98  ### 3.2 Findings
+       99  
+      100 -**Fidelity rises at first, then plateaus at about 2,500–5,000 
+          -samples.**                                                    
+      100 +**Fidelity rises at first, then changes little beyond about 2,
+          +500–5,000 samples within the tested range.**                  
+      101  - Above N = 2,500, held-out R² changes by less than 0.01–0.02 
+           in almost every setting.
+      102 +- This shows extra samples stopped improving fidelity in this 
+          +range. It does **not** establish a fixed ceiling set by the li
+          +near surrogate: the study didn't separate surrogate capacity f
+          +rom feature selection, discretisation or kernel width.        
+      103    - XGB at d = 500: 0.256 → 0.265 → 0.268
+      104    - LR at d = 300: 0.077 → 0.085 → 0.088
+      105  
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 2 lines, removed 1 line
+      108  - At **d = 100, RF beats XGB** (0.25 vs 0.18).
+      109  - At d = 50 and 100 the XGB vs RF difference is **not statisti
+           cally significant**:
+      110    - XGB's confidence band at d = 50 is very wide (0.17–0.43) b
+           ecause 20 of its 30 cases were "flat" (the predicted probabili
+           ty moved by less than 0.01 under perturbation), so R² rests on
+            only 10 cases.
+      111 -- XGB's lead is clear and significant only at **d = 300 and 50
+          -0**.                                                          
+      111 +- After Holm correction, XGB's fidelity lead is significant ov
+          +er LR at **d = 300 and 500**, but over RF only at **d = 500**.
+          + At d = 300 its lead over RF (+0.06) is not significant.      
+      112 +- R² excludes flat cases, so cross-model fidelity comparisons 
+          +rest on different numbers of cases. That matters most at d = 5
+          +0, where only 10 of XGB's 30 cases count.                     
+      113  - LR's fidelity **falls sharply as d grows** (0.19 → 0.08), wh
+           ile XGBoost's holds steady.
+      114  
+      115  **Fidelity is low for every model (R² ≈ 0.03–0.30).** Even at 
+           10,000 samples, the surrogate explains at most about 30% of th
+           e model's local variation. The study did not test the cause, s
+           o these are likely explanations for the Discussion or Limitati
+           ons:
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line, removed 1 line
+      151  | XGB | 300 | 0.29 | 0.55 | 0.70 | 0.81 | 0.85 |
+      152  | XGB | 500 | (0.03)* | 0.43 | 0.66 | 0.72 | 0.75 |
+      153  
+      154 -\* N ≤ d: a low sample-to-feature ratio. Explanations here are
+          - essentially random. These points are drawn as hollow markers 
+          -and kept out of the trend lines.                              
+      154 +\* N ≤ d: a low sample-to-feature ratio. N = d = 500 is the on
+          +ly such setting in the study. Repeat agreement there is very l
+          +ow (0.004–0.029); no random-selection baseline was tested. The
+          +se points are drawn as hollow markers and kept out of the tren
+          +d lines.                                                      
+      155  
+      156  ### 4.3 Findings
+      157  
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 13 lines, removed 10 lines
+      155  
+      156  ### 4.3 Findings
+      157  
+      158 -**✅ Random Forest is most stable at low d, XGBoost at high d.
+          -** This is a **crossover (rank reversal)**.                   
+      158 +**Random Forest is most stable at low d, XGBoost at high d.** 
+          +Describe this as a **descriptive crossover**: only part of it 
+          +is statistically supported.                                   
+      159  - XGBoost's lead at d = 300 over both RF (+0.17) and LR (+0.28
+           ) is **significant** after Holm correction.
+      160 -- At d = 50, 100 and 500 the gaps show in the confidence inter
+          -vals but **don't survive correction**. Describe these as trend
+          -s.                                                            
+      161 -- LR is the least stable model in nearly every setting.       
+      160 +- At d = 50, 100 and 500 the gaps show in the confidence inter
+          +vals but **don't survive correction**. That includes XGB's lea
+          +d over RF at d = 500. Describe these as trends.               
+      161 +- LR is the least stable model at every d at N = 5,000.       
+      162  
+      163 -**❌ "Stability increases faster per sample at higher d and le
+          -vels out by 10k." Reword this.**                              
+      164 -- The steeper early rise at high d exists only because those c
+          -urves **start much lower**: about 0.01–0.03 at N = 500, d = 50
+          -0.                                                            
+      165 -- At every N, stability is **lower** at high d than at low d. 
+      166 -- Only **XGBoost** at d ≥ 300 plateaus. Its 5k → 10k step adds
+          - just +0.03 to +0.04.                                         
+      163 +**Stability falls as d grows for RF and LR.** Holm-corrected c
+          +omparisons at N = 5,000:                                      
+      164 +- **RF:** drops from 0.80 at d = 50 to 0.60 at d = 500, which 
+          +is significant (p = 0.005).                                   
+      165 +- **LR:** drops from 0.68 at d = 50 to 0.53 at d = 300, which 
+          +is significant (p = 0.010). The drop from d = 50 to d = 500 is
+          + the same size but **not significant** after correction (p = 0
+          +.086).                                                        
+      166 +- **XGB:** no significant decline was detected between any pai
+          +r of d values. A non-significant result doesn't prove there is
+          + no decline.                                                  
+      167 +                                                              
+      168 +**Stability keeps rising with N, and the high-d curves start m
+          +uch lower.**                                                  
+      169 +- At N = 500, d = 500, repeat agreement is 0.004–0.029, so the
+          + high-d curves rise steeply from near zero.                   
+      170 +- At every N, RF and LR are less stable at high d than at low 
+          +d.                                                            
+      171 +- Only **XGBoost** at d ≥ 300 levels off. Its 5k → 10k step ad
+          +ds just +0.03 to +0.04.                                       
+      172  - **LR and RF are still clearly rising at d = 500** (+0.07 to 
+           +0.10 in the last step), so they have **not** levelled out by 
+           10k.
+      173  
+      169 -**Suggested wording:** "Stability decreases as d grows. The dr
+          -op is significant for Random Forest (0.80 → 0.60) and Logistic
+          - Regression (0.68 → 0.53) at N = 5,000, but not for XGBoost. O
+          -nly XGBoost reaches a plateau within 10,000 samples."         
+      174 +**XGBoost's stability is non-monotonic in d.** d = 300 is its 
+          +best setting. This may come from which features the random sub
+          +set happened to include. The ranked-subset check that would te
+          +st this wasn't run in full, so flag it as an open question.   
+      175  
+      171 -**New point: XGBoost's stability is non-monotonic in d.** d = 
+          -300 is its best setting. This may come from which features the
+          - random subset happened to include. The ranked-subset check th
+          -at would test this wasn't run in full, so flag it as an open q
+          -uestion.                                                      
+      172 -                                                              
+      176  ---
+      177  
+      178  ## 5. Convergence to a 50,000-sample reference
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 1 line
+      180  - Agreement between the two large-N reference explanations set
+           s a **ceiling** of 0.80–0.97. Every model × d setting passes t
+           he pre-registered validity rule (≥ 0.667), so the references c
+           an be trusted.
+      181  - Reaching about **90% of that ceiling** generally takes **10,
+           000 samples**. The exception is XGBoost at d = 300, which gets
+            there at 5,000.
+      182  - LR and RF at d ≥ 300 **never reach 90%** within the tested r
+           ange.
+      183 +- **At N = 5,000, d = 300**, agreement with the reference is *
+          +*0.855 for XGB**, against **0.692 for RF** and **0.609 for LR*
+          +*. XGB's lead over both survives the primary Holm correction (
+          +p = 0.004). This is the strongest statistical support for the 
+          +model effect on quality, and it bears directly on the cost/qua
+          +lity question.                                                
+      184  
+      185  Smallest N at which stability reaches 0.7:
+      186  
+
+⏺ Update(lime_study/notes/results_findings.md)
+  ⎿  Added 6 lines, removed 4 lines
+      205  - That is about **20× more time per unit of stability gained**
+            between the first and last steps.
+      206  - Across all models, each stability point costs roughly 5–20× 
+           more above N = 2,500 than below it.
+      207  
+      208 -**Fidelity and stability saturate at different points.**      
+      209 -- Fidelity flattens at about 2,500 samples, but stability keep
+          -s improving at a rising cost.                                 
+      210 -- Extra samples therefore mainly buy **consistency** between r
+          -uns, not a more **accurate** surrogate.                       
+      208 +**Fidelity and stability level off at different points.**     
+      209 +- Within the tested range, fidelity changes little after about
+          + 2,500 samples, but stability keeps improving at a rising cost
+          +.                                                             
+      210 +- Extra samples therefore mainly buy **consistency** between r
+          +uns, not a more **faithful** surrogate.                       
+      211  
+      212 -**A lower bound on N.** With N ≤ d (500 samples, 500 features)
+          -, explanations are effectively random (Jaccard 0.00–0.03). LIM
+          -E needs clearly more samples than perturbed features.         
+      212 +**Low sample-to-feature ratio.** At the one tested setting wit
+          +h N ≤ d (N = d = 500), repeat agreement was very low (0.004–0.
+          +029). One setting can't establish a general N > d threshold. S
+          +tability does stay low until N is several times d: 0.08–0.29 a
+          +t N = 500, d = 300, and 0.18–0.43 at N = 1,000, d = 500.      
+      213  
+      214 +**The model matters more for quality than for cost.** At N = 5
+          +,000, d = 500, runtimes differ by under 10% across models (0.4
+          +38–0.480 s). Agreement with the 50,000-sample reference ranges
+          + from 0.61 to 0.76.                                           
+      215 +                                                              
+      216  **Which model gives the best trade-off** (`cost_vs_quality.png
+           `)?
+      217  - **At low d (50–100):** Random Forest sits highest, giving th
+           e best quality per second.
+      218  - **At high d (300–500):** XGBoost sits highest. It costs slig
+           htly more but converges much better.
+
+⏺ Update(lime_study/notes/results_findings.md)  ⎿  Added 2 lines, removed 2 lines
+      218  - **At high d (300–500):** XGBoost sits highest. It costs slig
+           htly more but converges much better.
+      219  - **Logistic Regression** is the weakest trade-off at high d.
+      220  
+      221 -**Practical recommendation.** LIME's default of 5,000 samples 
+          -is past the fidelity plateau but not yet at the stability plat
+          -eau, especially for high-d LR and RF.                         
+      221 +**Practical recommendation.** LIME's default of 5,000 samples 
+          +is past the point where fidelity stops changing, but not where
+          + stability levels off, especially for high-d LR and RF.       
+      222  
+      223 -**Accuracy doesn't predict explanation quality.** Logistic Reg
+          -ression is the most accurate model (95.5%) but gives the least
+          - stable and least faithful LIME explanations.                 
+      223 +**Accuracy doesn't predict explanation quality.** Logistic Reg
+          +ression is the most accurate model (95.5%). Yet it gives the l
+          +east faithful LIME explanations at every d, and the least stab
+          +le at every d at N = 5,000.                                   
+      224  
+      225  ---
+      226  
+
+⏺ I've corrected results_findings.md (lime_study/notes/results_findings.md). It
+  had gone back to an older version, so I worked from what was on disk.
+
+  The three claims you asked about:
+  - "Effectively random" at N ≤ d: now says this was tested at only one setting
+    (N = d = 500), where repeat agreement was very low (0.004–0.029). It also
+    notes that no random baseline was tested and that one setting can't
+    establish a general rule.
+  - "XGBoost the only model that didn't decline": now gives the exact tests.
+    - Random Forest's drop is significant.
+    - Logistic Regression's drop from d = 50 to 300 is significant (p = 0.010),
+      but its drop from 50 to 500 isn't (p = 0.086).
+    - For XGBoost, no significant decline was detected, which isn't the same as
+      proving there was none.
+  - The 128 vs 16 importance figure: it isn't in this version of the file, so
+    nothing to remove. It still needs to come out of your Results paragraph if
+    it's there.
+
+  Other fixes from the feedback:
+  - Runtime gap explanation: now labelled as a hypothesis, since the stages
+    weren't timed separately.
+  - Fidelity: now says it "changes little beyond 2,500–5,000 within the tested
+    range". The claim of a ceiling caused by the surrogate is gone, and there's
+    a note that excluding flat cases affects comparisons between models.
+  - Stability crossover: now called descriptive, with XGBoost's lead over RF at
+    d = 500 explicitly marked as not significant.
+  - "Model matters more for quality than cost": now backed by a specific
+    comparison. At N = 5,000, d = 500, runtimes differ by under 10%, while
+    reference agreement ranges from 0.61 to 0.76.
+  - Reference agreement at d = 300: added (XGBoost 0.855, RF 0.692, LR 0.609),
+    with XGBoost's lead surviving correction.
+  - Logistic Regression: "least stable and least faithful" now states when it
+    holds: least faithful at every d, least stable at every d at N = 5,000.
+
+  One error the feedback missed: XGBoost's fidelity lead over Random Forest at d
+  = 300 isn't significant either. It's significant only at d = 500, so I've
+  corrected that line too.
+
+  I also removed the ✅/❌ markers and "suggested wording" that had come back
+  with the old version, since you'd asked for those to go earlier.
+
+❯ this is the current paper. can you verify that everything is correct, and
+  also verify the following feedback:
+  What claude said about the current version: Mostly yes: the numbers in the
+  abstract, results, Table II and conclusion line up. I checked the rounding,
+  the 4/6 threshold, the 240 references, the 36-test family, and the doubling
+  arithmetic (2^0.72–2^0.77 = 1.65–1.70, and 20^b ≈ 8.7–10, which matches the
+  "8–10-fold" claim). A few real inconsistencies remain, though, and some are
+  things a marker would catch.
+
+  ## Inconsistencies to fix
+
+  1. **The conclusion claims something the results never show.** It says
+  "random forest [agrees best with the reference] at d ≤ 100." The results only
+  give *repeat* Jaccard at d = 50 (RF 0.80). They give no reference Jaccard at
+  d = 50 or 100. Either add that result or change the conclusion to "random
+  forest is the most stable at d = 50."
+  2. **"Stability declined with d … but not detectably for XGBoost."** Your own
+  table shows XGBoost's repeat Jaccard *rose* from 0.719 at d = 50 to 0.814 at
+  d = 300. "Not detectably" undersells this, and it contradicts the intro's
+  premise that quality suffers as d grows. Say it didn't decline, or that it
+  rose.
+  3. **The stability-vs-d tests aren't in your stated test family.** III-G
+  pre-specifies 36 tests: model pairs × d for runtime, RMSE and reference
+  Jaccard. The "declined significantly with d" claims are a different
+  comparison (d vs d within a model), and the paper never says which test or
+  correction was used for them.
+  4. **RMSE is in your pre-specified family, but you then say it isn't
+  comparable across models** (V-C and Limitations). Meanwhile R², which you
+  call the fairer metric, isn't tested at all. At minimum, acknowledge this. A
+  better fix is to note that RMSE results aren't interpreted for this reason.
+  5. **Fig. 2 is referenced but doesn't exist.** There's still the "[Insert
+  Cost vs Quality png?]" placeholder (see the figures section below).
+  6. **The saturation argument in V-D doesn't quite hold.** You say LR is
+  saturated on 20 of 30 cases and that "saturation explains which cases were
+  excluded." But only 21 of 120 case × d combinations were excluded for LR. The
+  exclusion uses weighted SD of perturbed outputs, not saturation at the
+  instance, so soften this to "partly explains."
+  7. **Results C leads with the weak evidence.** It opens with the d = 500
+  reference-agreement spread, which didn't survive Holm correction, while the
+  abstract leads with d = 300, which did. Lead with d = 300 in the results too.
+  8. **Check Table II.** LR held-out R² is 0.085 at both d = 300 and d = 500.
+  That may be correct, but identical values look like a copy-paste error.
+
+  ## Smaller fixes
+
+  - **Terminology drifts.** Pick one name for each metric and use it
+  everywhere:
+    - "Stability", "repeat Jaccard" and "agreement between repeats" all mean
+  the same thing.
+    - "Convergence", "reference Jaccard" and "top-5 agreement" (in the Fig. 1
+  caption) all mean the same thing.
+    - "Local fidelity" and "held-out R²" are also used interchangeably.
+  - **"9–17 ms per 1,000 samples" is the slope, not cost per sample.** At d =
+  500 and N = 5,000, total runtime divided by N is about 88–96 ms, so write
+  "marginal cost per 1,000 samples."
+  - **The N = d = 500 exclusion is one cell per model**, so three cells, not
+  "the single cell."
+  - **"LIME's in-sample score is recorded for comparison only"** is never
+  reported. Cut it.
+  - **Grammar and citations:**
+    - II-C: "Given that its simple" should be "it's," and that paragraph is the
+  wordiest in the paper.
+    - Limitations: "…barely uses, may explain the near-constant outputs" should
+  be "which may explain."
+    - Citing the scikit-learn paper [9] as the source for logistic regression
+  is odd. Cite it in Table I instead, or add a proper LR reference.
+  - **Housekeeping:**
+    - Resolve the two Word comments (CM1/CM2).
+    - Fill in refs [2]–[4], [6] and [7], and clear the [verify] tags.
+    - Add the access date for [14], and add a space in "Networks (ESANN)".
+
+  ## What to cut to get to 3 pages
+
+  **Methodology (biggest savings):**
+  - **III-A Study Design** repeats the abstract and III-D/E. Cut it to two
+  lines: the factorial design and "the case is the unit of analysis."
+  - **II-C Choice of Models** can go from about 12 lines to about 4: one line
+  per model saying what family it represents, then the linear / bagged /
+  boosted rationale once. That also addresses CM1, which asks for the "why."
+  - **II-D:** drop "though not in the strict statistical sense…".
+  - **Eq. (1):** stages weren't timed, so replace it with one sentence
+  ("sampling and weighting scale with N·d; only prediction depends on the
+  model"). That's all V-A needs.
+  - **III-E:** shorten the SeedSequence sentence to "per-case seeds make every
+  run reproducible."
+  - **Participant-clustered intervals** are mentioned in both III-G and
+  Limitations. Keep one.
+
+  **Results:**
+  - Stop restating Table II values in the prose (0.855, 0.692, 0.609, 0.80,
+  0.81, 0.438…). Give the finding and the p-value, and point to the table.
+  - Cut the first paragraph of Results C down to one clause, or drop it.
+
+  **Discussion and Limitations:**
+  - **Merge V-C (R² vs RMSE)** into the "Metric comparability" bullet. It's the
+  same point made twice.
+  - **Cut the TabFM and Spearman paragraph** to one sentence or remove it. It's
+  design history, not a limitation of the results.
+  - **Turn the Limitations bullets into a compact paragraph.** Kernel width and
+  random subsets can share a sentence, since the conclusion already names both
+  as future work.
+
+  **Conclusion:**
+  - The RQ1–3 recap is nearly the abstract word for word. Cut it to two
+  sentences and keep the practical recommendation (N ≥ 5,000 for d ≥ 300, avoid
+  N ≤ d, measure fidelity directly).
+
+  ## Figures
+
+  Keep one figure. I'd keep Fig. 1, because it covers all three research
+  questions, and drop the planned Fig. 2. The marginal-cost numbers in Results
+  B (0.006 s vs 0.137 s per 0.01 Jaccard) already make the cost-vs-quality
+  point in words. Remove the "(Fig. 2)" reference. Also make sure Fig. 1 is
+  legible at column width. It looks very small in the draft, and a dense
+  unreadable figure costs space without earning it.
+
+  Keep Table II, since it lets you cut numbers from the prose. Table I could
+  become a sentence if you're still over, but that saves only about 5 lines, so
+  try it last.
+
+  To get references onto their own page, put a page break (or column/section
+  break) before REFERENCES once the content fits.
+  Several limitations bear directly on the conclusions. The default kernel
+  width of 0.75√d changes with d, and the perturbed features are random rather
+  than the most important ones, so part of the apparent effect of d may come
+  from the kernel, and at low d LIME may perturb features the model barely
+  uses, which may explain the near-constant outputs; fixed-kernel and
+  ranked-subset variants exist in the code but were not run as full studies.
+  Metrics are not fully comparable across models: at d ≥ 300 random forest had
+  the lowest RMSE without the highest R², because its output barely moves
+  locally (weighted SD ≈ 0.06, against 0.20–0.36 for LR and XGBoost), so R²,
+  which normalises by this variation, is the fairer comparison; at d ≤ 100, R²
+  also covers different cases per model. Only 30 cases from 9 test participants
+  on one dataset were explained. LIME samples each feature independently, so
+  its perturbations combine sensor readings that cannot occur together,
+  querying the model away from its training data. Each model used one untuned
+  configuration, so the findings describe these models rather than their
+  families in general. Absolute runtimes come from one single-threaded machine
+  and will not transfer to other hardware, though the scaling exponents and
+  relative comparisons should. A tabular foundation model was dropped after a
+  GPU pilot on an earlier protocol estimated about 35 hours of runtime.
+
+⏺ I'll check the paper's numbers against the saved results and the code,
+  starting with the claims I haven't verified before.
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && grep -nE
+      "alpha|percentile|quantile" lime_study/config.py lime_study/analysi…)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && sed -n 300,350p
+      lime_study/analysis.py; grep -n "RIDGE_ALPHA =" lime_study/c…)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && grep -rniE "hour" log_entries
+      tabfm coverTree_activities lime_study/notes --…)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && cat >
+      "/private/tmp/claude-503/-Users-ExtraAccount-Documents-college-subject…)
+  ⎿  (No output)
+  ⎿  (timeout 10m)
+
+⏺ I checked the paper against the saved results and the code. Almost every
+  number is correct, including Table II, all the p-values in IV-C, the flat-case
+  counts, and the scaling exponents. But the paper has a few problems the
+  feedback missed, and about a third of the feedback describes an older draft.
+
+  Problems the feedback missed
+
+  1. Fig. 1 looks like the wrong figure. In the PDF its bottom row shows flat
+     lines with Logistic Regression on top, which is the RMSE row. That means
+     the embedded image is lime_scaling_grid.png. The caption says "top-5
+     agreement", and the paper itself argues that RMSE isn't comparable across
+     models. Replace it with lime_overview.png, whose bottom row is repeat
+     Jaccard. Please check this against your file, since the image in the PDF is
+     small.
+  2. The "20 of 30" for Logistic Regression in V-C doesn't reproduce. I refit
+     the models and counted how often the true-class probability was within 0.01
+     of 0 or 1:
+     - XGBoost: 24, which matches the paper.
+     - Logistic Regression: 19 (21 at a 0.02 cutoff).
+
+     This number isn't in the saved results, so it has the same traceability
+     problem as the 128/16 figure. Either state the threshold and rerun it, or
+     cut the sentence.
+  3. Discussion V-B still overclaims.
+     - "Rankings are close to random": use "very low agreement" (we agreed this
+       earlier).
+     - "The surrogate is barely determined": the ridge fit is regularised (α
+       = 1), so it isn't actually underdetermined. Drop the phrase.
+     - "Fidelity is limited by how well a linear model… can approximate": this
+       states an untested explanation as fact. Write "is likely limited by".
+  4. The conclusion overgeneralises in two places.
+     - "N ≤ d should be avoided" rests on one setting. Better: "budgets close to
+       d should be avoided: at N = d = 500, agreement was near zero."
+     - "More samples do not improve fidelity" should add "beyond about 5,000
+       samples".
+  5. The abstract says R² ≤ 0.30, but the maximum is 0.303 (XGBoost, d = 50, N =
+     10,000). Write "about 0.3 or less", as the conclusion does.
+  6. The runtime gap is worded two ways. The abstract says "under 10%"; Results
+     and Conclusion say "about 9%". The real gap is 9.6% measured against LR
+     (8.8% against XGBoost). Use "under 10%" everywhere.
+  7. The TabFM figure of about 35 hours isn't anywhere in the repo, and the
+     earlier draft said 34. Confirm it with whoever ran the pilot.
+
+  Verdict on each feedback point
+
+  #: 1
+  Feedback: Conclusion's "RF highest at d ≤ 100" isn't shown in results
+  Verdict: Wrong. IV-C reports it ("At d ≤ 100, random forest had the highest
+  reference Jaccard…"), and Table II has the d = 50 and 100 reference values.
+  ────────────────────────────────────────
+  #: 2
+  Feedback: XGBoost stability "rose"
+  Verdict: Partly right. It went 0.72 → 0.81 at d = 300, but back to 0.72 at d =
+
+  500, and the rise isn't significant (Holm p = 1.0). "Rose" would be wrong.
+  Use "showed no decline (0.72 at d = 50 and at d = 500)". The point that this
+  goes against the introduction's expectation is fair; it's worth one sentence
+  in the Discussion.
+  ────────────────────────────────────────
+  #: 3
+  Feedback: d-vs-d tests aren't in the stated family
+  Verdict: Right. The code uses the same paired sign-flip test, with Holm
+  correction over a separate family of 54 within-model comparisons (3 models ×
+  3 metrics × 6 d-pairs). Add one sentence to III-G.
+  ────────────────────────────────────────
+  #: 4
+  Feedback: RMSE is in the primary family but called non-comparable
+  Verdict: Right. The pre-specified family is runtime, RMSE and reference
+  Jaccard, and R² isn't tested. Say in III-G or Limitations that RMSE tests
+  aren't interpreted across models for this reason.
+  ────────────────────────────────────────
+  #: 5
+  Feedback: Fig. 2 doesn't exist
+  Verdict: Right. Remove "(Fig. 2)" and the "[Insert…]" placeholder.
+  ────────────────────────────────────────
+  #: 6
+  Feedback: V-D saturation should say "partly"
+  Verdict: Outdated. The section is now V-C, and it already says "only partly
+  explains". The real problem is the unreproducible 20 (see above).
+  ────────────────────────────────────────
+  #: 7
+  Feedback: Results C leads with the non-significant d = 500 result
+  Verdict: Wrong. It opens with the d = 500 runtime gap, then d = 300 reference
+  agreement. One related fix: that opening sentence gives only the cost half of
+   "quality more than cost". Add the quality spread too (reference Jaccard
+  0.61–0.86 at d = 300).
+  ────────────────────────────────────────
+  #: 8
+  Feedback: LR R² 0.085 twice looks like a copy-paste error
+  Verdict: Checked, and it's correct: 0.0849 at d = 300 and 0.0848 at d = 500.
+
+  Smaller points:
+
+  ┌────────────────────────────┬────────────────────────────────────────────┐
+  │           Point            │                  Verdict                   │
+  ├────────────────────────────┼────────────────────────────────────────────┤
+  │                            │ Right. For example, the Fig. 1 caption     │
+  │ Terminology drift          │ says "top-5 agreement". Pick one name per  │
+  │                            │ metric.                                    │
+  ├────────────────────────────┼────────────────────────────────────────────┤
+  │ "Marginal cost per 1,000   │ Right. This applies to the abstract too.   │
+  │ samples"                   │                                            │
+  ├────────────────────────────┼────────────────────────────────────────────┤
+  │ "Single cell" with N ≤ d   │ Minor. "The single (N, d) setting" is      │
+  │                            │ accurate.                                  │
+  ├────────────────────────────┼────────────────────────────────────────────┤
+  │ In-sample score never      │ Right. Cut it.                             │
+  │ reported                   │                                            │
+  ├────────────────────────────┼────────────────────────────────────────────┤
+  │ "Given that its simple"    │ Right: "it's".                             │
+  ├────────────────────────────┼────────────────────────────────────────────┤
+  │ "Which may explain" in     │ Already fixed in the current version.      │
+  │ Limitations                │                                            │
+  ├────────────────────────────┼────────────────────────────────────────────┤
+  │ Citing [9] for LR          │ Right.                                     │
+  ├────────────────────────────┼────────────────────────────────────────────┤
+  │ Housekeeping (references,  │ Right.                                     │
+  │ comments, access date)     │                                            │
+  └────────────────────────────┴────────────────────────────────────────────┘
+
+  Cutting suggestions:
+  - Outdated:
+    - "Merge V-C (R² vs RMSE)": V-C is now about accuracy.
+    - "Cut the TabFM and Spearman paragraph": it's one sentence now, and
+      Spearman is gone.
+    - "Turn the Limitations bullets into a paragraph": already done.
+    - "Clustered intervals mentioned twice": they're no longer in Limitations.
+  - Still reasonable: shortening II-C, III-A and the SeedSequence sentence, and
+    trimming the RQ recap in the conclusion.
+  - Eq. (1): I'd keep it, because V-A builds its explanation on it.
+
+  Your Limitations paragraph
+
+  It checks out against the data:
+  - RF's weighted SD is 0.06–0.07, against 0.20–0.36 for LR and XGBoost.
+  - The near-constant cases occur only at d ≤ 100.
+  - The fixed-kernel and ranked-subset variants exist in the code but weren't
+    run in full.
+
+  Only the 35-hour figure is unconfirmed (point 7 above).
+
+  The verification scripts are in the scratchpad and nothing in the repo
+  changed. To reproduce the saturation count:
+  /private/tmp/claude-503/-Users-ExtraAccount-Documents-college-subjects-block-1
+  0-xAI-xAI-Project-XAI/1ff1054d-6d78-481c-baa1-d384a3cce1e3/scratchpad/sat.py.
+
+❯ some of the feedback is a little old, so some of it may not be valid anymore.
+  excluding outdated feedback, what are the main points that should be
+  addressed, and are there any points that we can cut/make more concise
+
+⏺ Leaving out the outdated feedback, this is what's left, ranked by how much
+  each point matters.
+
+  Must fix (a marker would notice these)
+
+  1. Swap Fig. 1 for lime_overview.png. The current image appears to show RMSE
+     in its bottom row, not stability, so it doesn't match its caption. While
+     you're there, make sure it's readable at column width.
+  2. Remove the Fig. 2 reference and the "[Insert Cost vs Quality png?]"
+     placeholder.
+  3. Fix or cut "20 of 30" for Logistic Regression in V-C. It doesn't reproduce:
+     I get 19 at a 0.01 cutoff, while XGBoost's 24 does match. Either state the
+     threshold and use 19, or cut the saturation sentences. Cutting also saves
+     space.
+  4. Describe the d-vs-d stability tests in III-G. One sentence covers it:
+     "Within-model comparisons across d use the same test, Holm-corrected over
+     their own family of 54."
+  5. Explain the RMSE test problem. RMSE is in the pre-specified family, but the
+     paper says it isn't comparable across models. Add a clause such as "RMSE
+     comparisons are reported but not interpreted across models (Section VI)."
+  6. Soften the overclaims:
+     - V-B, "rankings are close to random" and "barely determined": change to
+       "very low agreement".
+     - V-B, "fidelity is limited by…": change to "is likely limited by…".
+     - Conclusion, "N ≤ d should be avoided": change to "budgets close to d
+       should be avoided".
+     - Conclusion, "more samples do not improve fidelity": add "beyond about
+       5,000".
+  7. Make the numbers consistent:
+     - The abstract says "R² ≤ 0.30", but the maximum is 0.303. Write "about 0.3
+       or less".
+     - The runtime gap appears as both "about 9%" and "under 10%". Use "under
+       10%" everywhere.
+     - Confirm the 35-hour TabFM figure with whoever ran it.
+
+  Should fix (clarity)
+
+  8. XGBoost and d. Replace "not detectably for XGBoost" with "XGBoost showed no
+     decline (0.72 at both d = 50 and d = 500)". Add one Discussion sentence
+     noting that this goes against the introduction's expectation that quality
+     falls with d.
+  9. Results C opening. "Quality more than cost" gives only the runtime half.
+     Add the quality half: reference Jaccard ranges from 0.61 to 0.86 at d
+     = 300.
+  10. One name per metric. For example:
+      - stability = repeat Jaccard
+      - convergence = reference Jaccard
+      - fidelity = held-out R²
+
+      Fix the Fig. 1 caption ("top-5 agreement") to match.
+  11. "Marginal cost per 1,000 samples" in the abstract and Results A, because
+      9–17 ms is the slope, not total cost divided by N.
+  12. Cut "LIME's in-sample score is recorded for comparison only" (III-F). It's
+      never reported.
+  13. Small fixes:
+      - "Given that it's simple" (II-C).
+      - Cite the LR model properly instead of using [9], the scikit-learn paper.
+      - References: fill in [2]–[4], [6] and [7], clear the [verify] tags, add
+        the access date to [14], and fix the spacing in "Networks (ESANN)".
+
+  What to cut or tighten
+
+  ┌───────────────┬────────────────────────────────────────────────┬───────┐
+  │     Where     │                      Cut                       │ Saves │
+  ├───────────────┼────────────────────────────────────────────────┼───────┤
+  │               │ One line per model saying what it represents   │       │
+  │ II-C Choice   │ (linear / bagged trees / boosted trees). Drop  │ ~6–8  │
+  │ of Models     │ "Not only is this another complex model…" and  │ lines │
+  │               │ "This model provides an adequate contrast…".   │       │
+  ├───────────────┼────────────────────────────────────────────────┼───────┤
+  │               │ Drop the saturation sentences (which also      │       │
+  │ V-C           │ fixes point 3). Keep the                       │ ~4    │
+  │               │ accuracy-vs-perturbation point and the         │ lines │
+  │               │ plausible-reason sentence.                     │       │
+  ├───────────────┼────────────────────────────────────────────────┼───────┤
+  │ III-A Study   │ Cut to two lines: the factorial design plus    │ ~3    │
+  │ Design        │ "the case is the unit of analysis". The rest   │ lines │
+  │               │ repeats the abstract and III-D/E.              │       │
+  ├───────────────┼────────────────────────────────────────────────┼───────┤
+  │ III-E         │ Replace the SeedSequence sentence with         │ ~2    │
+  │               │ "per-case seeds make every run reproducible".  │ lines │
+  ├───────────────┼────────────────────────────────────────────────┼───────┤
+  │ II-D          │ Drop "though not in the strict statistical     │ ~1–2  │
+  │               │ sense of having more features than rows".      │ lines │
+  ├───────────────┼────────────────────────────────────────────────┼───────┤
+  │               │ You restate the d ≤ 100 p-values in full.      │       │
+  │ IV-C          │ Collapse them to "At d ≤ 100, RF had the       │ ~3    │
+  │               │ highest convergence, but not significantly     │ lines │
+  │               │ above XGBoost." The values are in Table II.    │       │
+  ├───────────────┼────────────────────────────────────────────────┼───────┤
+  │ Conclusion,   │ It nearly repeats the abstract. Cut it to two  │ ~4    │
+  │ first         │ sentences and keep the practical               │ lines │
+  │ paragraph     │ recommendation paragraph.                      │       │
+  ├───────────────┼────────────────────────────────────────────────┼───────┤
+  │ Table I       │ Only as a last resort: turn it into a          │ ~5    │
+  │               │ sentence.                                      │ lines │
+  └───────────────┴────────────────────────────────────────────────┴───────┘
+
+  The first three rows save the most space for the least effort, and the V-C cut
+  also fixes a problem. Keep Eq. (1), because Discussion V-A's explanation
+  depends on it.

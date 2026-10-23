@@ -1,0 +1,172 @@
+
+❯ can you verify whether this is true:"Fidelity is low because of the dataset".
+  fidelity is calculated with R^2 (maybe check to see how it calculated for
+  better understanding)
+  the dataset is stored in lime_study/data/
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && ls lime_study lime_study/data &&
+      grep -rn -i "fidelity\|r2\|score(" lime_stu…)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && grep -rn -i
+      "fidelity\|r2\|\.score" *.py | head -50; cat config.p…)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && sed -n 240,320p
+      protocol.py; sed -n 400,440p protocol.py; head -3…)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && grep -n "def
+      subset_predict\|def make_explainer\|def load\|subset…)
+  ⎿  (No output)
+
+⏺ I notice the logistic regression model—despite being closest to
+  linear—actually gets the lowest R², arguing against a purely data-driven
+  explanation. I'll run a controlled check to separate dataset effects from
+  LIME-configuration effects.
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI/lime_study" && sed -n 85,135p
+      protocol.py; sed -n 355,384p protocol.py)
+  ⎿  (No output)
+
+⏺ Bash(cd "/Users/ExtraAccount/Documents/college
+      subjects/block_10/xAI/xAI_Project/XAI" && ls -a | head -30; for p in
+      python3 .venv/bin/python venv/bin/python; do [ -x…)
+  ⎿  Error: Exit code 1
+     .
+     ..
+     .git
+     .gitignore
+     .venv
+     README.md
+     coverTree_activities
+     data_sources
+     lime_study
+     … +6 lines (ctrl+o to expand)
+
+⏺ Bash(mkdir -p "$SCRATCH" 2>/dev/null;
+      S=/private/tmp/claude-503/-Users-ExtraAccount-Documents-college-subjects-b
+      lock-10-xAI-xAI-Project-XAI/fe738a21-2198-44e2-a627-f…)
+  ⎿  (No output)
+  ⎿  (timeout 10m)
+
+⏺ The claim is mostly false as stated. The dataset contributes, but it isn't the
+  main reason fidelity is low. Most of the low R² comes from how LIME is
+  configured in this study and from the models' probability outputs.
+
+  How fidelity is calculated
+
+  There are two fidelity numbers:
+
+  - fidelity_insample is LIME's own explanation.score. It is the weighted R² of
+    the Ridge surrogate on the same perturbations it was fitted on
+    (protocol.py:427 (lime_study/protocol.py#L427)).
+  - fidelity_heldout is the headline metric (protocol.py:290-305
+    (lime_study/protocol.py#L290-L305)). The fitted surrogate predicts on 5,000
+    fresh perturbations it never saw, and the score is r2_score(target,
+    prediction, sample_weight=kernel_weights). The target is the model's
+    probability for the explained class.
+  - Flat cases are excluded. If the model's probability barely changes locally
+    (weighted SD < 0.01, config.py:117 (lime_study/config.py#L117)), R² is set
+    to NaN, because R² is relative to that variation.
+
+  So an R² of 0.1 means the 10-feature linear surrogate explains about 10% of
+  the kernel-weighted variance in the model's probability around the instance.
+
+  What the results show
+
+  At LIME's default of 5,000 samples, mean held-out R² on non-flat cases is:
+
+  ┌────────────────────┬─────────────┐
+  │       Model        │ Held-out R² │
+  ├────────────────────┼─────────────┤
+  │ LogisticRegression │ 0.106       │
+  ├────────────────────┼─────────────┤
+  │ RandomForest       │ 0.222       │
+  ├────────────────────┼─────────────┤
+  │ XGBoost            │ 0.248       │
+  └────────────────────┴─────────────┘
+
+  The first evidence against the claim is that the most linear model scores
+  lowest. If "this dataset can't be explained linearly" were the cause, logistic
+  regression should fit best, not worst. The order points to the explanation
+  pipeline instead.
+
+  Ablation on the same HAR data
+
+  I ran a quick ablation with a 100-feature subset, one case per class and 5,000
+  samples. The data stayed the same and only LIME settings changed:
+
+  ┌─────────────────────────────────────────────────┬──────────┬───────────┐
+  │                   LIME config                   │ LogReg   │ XGBoost   │
+  │                                                 │    R²    │    R²     │
+  ├─────────────────────────────────────────────────┼──────────┼───────────┤
+  │ Study config (quartile discretization, 10       │ 0.076    │ 0.272     │
+  │ features)                                       │          │           │
+  ├─────────────────────────────────────────────────┼──────────┼───────────┤
+  │ Discretized, all 100 features                   │ 0.104    │ 0.287     │
+  ├─────────────────────────────────────────────────┼──────────┼───────────┤
+  │ Continuous features, 10 features                │ 0.212    │ 0.458     │
+  ├─────────────────────────────────────────────────┼──────────┼───────────┤
+  │ Continuous, all 100 features                    │ 0.267    │ 0.482     │
+  └─────────────────────────────────────────────────┴──────────┴───────────┘
+
+  Turning off discretize_continuous roughly doubles or triples R² on identical
+  data. The study config turns each feature into an in-quartile/not-in-quartile
+  indicator, so the surrogate can't follow how the probability changes smoothly
+  within a bin. Restricting the surrogate to 10 features costs a little more. I
+  also tried local sampling with kernel width 1, but those runs were degenerate
+  (R² = 0: the kernel was too narrow in 100 dimensions), so I left them out of
+  the table.
+
+  Where the dataset does play a part
+
+  - Correlated features. Mean |r| between HAR features is 0.42, and 15% of
+    feature pairs have |r| > 0.8. LIME perturbs each feature independently
+    (sample_around_instance=False), which creates unrealistic rows and spreads
+    importance across redundant features.
+  - Confident models. Accuracy is 93–95%, so probabilities are often stuck near
+    0 or 1. The result is many flat cases (XGBoost: 67% at d=50) and sharp jumps
+    that a linear fit can't follow. That comes from the model fit as much as
+    from the data.
+  - Variation between classes. LAYING is easy to explain (R² ≈ 0.5 for
+    RandomForest and XGBoost). STANDING is hard (≈ 0.06) under every config.
+
+  Suggested wording
+
+  "Fidelity is low mainly because of LIME's default settings (quartile
+  discretization, a 10-feature surrogate, independent sampling with a wide
+  kernel) applied to confident classifiers. HAR's highly correlated features
+  make it worse."
+
+  The ablation script is at /private/tmp/claude-503/-Users-ExtraAccount-Document
+  s-college-subjects-block-10-xAI-xAI-Project-XAI/fe738a21-2198-44e2-a627-f38de3
+  1caeb0/scratchpad/ablate.py. It's a small check (6 cases, one feature subset,
+  2 models), so treat it as directional rather than a result for the paper.
+
+❯ in this, don't quote me and then say "reword this", this is where i want you
+  to reword everything anyways, to give the actual facts
+
+⏺ Why fidelity is low
+
+  LIME fidelity is the weighted R² of LIME's linear surrogate against the
+  model's predicted probability for the explained class. The headline version
+  scores the surrogate on 5,000 fresh perturbations it wasn't fitted on
+  (protocol.py:290-305 (lime_study/protocol.py#L290-L305)). Cases where the
+  model's output barely moves locally (weighted SD < 0.01) are left out, because
+  R² is undefined there. At LIME's default of 5,000 samples, mean held-out R²
+  is 0.11 for logistic regression, 0.22 for random forest and 0.25 for XGBoost.
+
+  The main cause is the LIME configuration, not the dataset.
+
+  - Quartile discretization is the biggest single factor. LIME turns each
+    feature into an in-bin/out-of-bin indicator, so the surrogate can't follow
+    how the probability changes smoothly within a bin. On the same HAR data,
+    using continuous features instead raised R² from 0.08 to 0.21 for logistic
+    regression and from 0.27 to 0.46 for XGBoost
+  ⎿  Interrupted · What should Claude do instead?
