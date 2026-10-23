@@ -17,4 +17,10 @@ Prompts were mostly **exploratory** ("suggest datasets or papers"), **explanator
 
 ## Human oversight
 
-AI responses were treated as **suggestions and explanations, not experimental evidence**. The study's measured results came from the project experiments; interpretations, technical changes, and final written claims required review against those results and the original sources.
+AI responses were treated as **suggestions and explanations, not experimental evidence**. The study's measured results came from the project experiments; interpretations, technical changes, and final written claims required review against those results and the original sources. 
+ 
+### Prompt used to make this summary 
+
+Can you make me a .md file for a git hub repo jus tsummariseing shortly the use of ai throughout this paper/project as a hole. Included only relevant chats as there may be unrelevant chats in the project directory by mistake, it should all be around XAI and Lime Cost/Quality scaling. Speak shortly about the different style of promps used (can give examples or just generilise), what was give in response (summarised and generilised here). For example when it comes to dataset recommendation give a [I ask you to; help find, help explain, help quantify worth, etc.] and you responsed back with [x, y, z] 
+
+just a short summary if the ai usesage throughout this project
