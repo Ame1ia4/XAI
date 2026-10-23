@@ -18,7 +18,8 @@ Our research investigates how LIME's computational cost and explanation quality 
 
 ## Links
 
-- [Latest Report Draft](research_paper_draft/)
+- [Final Report Submitted](LIME_Scaling_Paper_Final.pdf)
+- [Latest Report Draft](research_paper_draft.md)
 - [Research Journal](log_entries/)
 - [Research Papers](papers_researched/)
 - [Experimental Code and Results](lime_study/)
@@ -34,7 +35,7 @@ The following entries document the project's development, discussions and resear
 - **[21 September – Topic Exploration](log_entries/21-09-2026.md):** Considered studying LIME's computational scaling with feature dimensionality.
 - **[25 September – Alternative Approaches](log_entries/25-09-2026.md):** Investigated SHAP, LIME and other explainability approaches when considering possible topics.
 - **[29 September – Research Planning](log_entries/29-09-2026.md):** Assigned literature research, dataset selection and experimental planning responsibilities.
-- **[1 October – Literature Review](log_entries/01-10-2026(David%20Paper%20Summary).md):** Reviewed research discussing LIME's computational cost and limitations.
+- **[1 October – Literature Review](<log_entries/01-10-2026(David%20Paper%20Summary).md>):** Reviewed research discussing LIME's computational cost and limitations.
 - **[4 October – Topic Justification](log_entries/04-10-2026.md):** Established the research motivation and identified gaps in LIME cost/quality scaling studies.
 - **[7 October – Evaluation Metrics](log_entries/07-10-2026.md):** Planned how runtime, stability and fidelity would be measured.
 - **[16 October – Report Structure](log_entries/16-10-2026.md):** Discussed IEEE formatting and the structure of the research paper.
@@ -42,8 +43,7 @@ The following entries document the project's development, discussions and resear
 - **[18 October – Methodology Planning](log_entries/18-10-2026.md):** Outlined the methodology section, experimental parameters and reproducibility requirements.
 - **[20 October – Dataset and Metric Changes](log_entries/20-10-2026.md):** Documented the transition to UCI HAR and the decision to remove Spearman correlation.
 - **[21 October – Methodology Corrections](log_entries/21-10-2026.md):** Revised fidelity, statistical testing, reference comparisons and dimensionality settings.
-
-An additional [final task list](log_entries/22-10-2026.md) records remaining report and repository work; its filename date needs correcting.
+- **[22 October – Final Task List](log_entries/22-10-2026.md):** Final taskes to do before submission.
 
 ## Changes Since the Presentation
 
